@@ -1,0 +1,19 @@
+# Hammerspoon gitignore
+
+# IDE files
+.vscode/
+hammerspoon.code-workspace
+
+# Temporary files
+.DS_Store
+Thumbs.db
+
+# Private config
+private/
+
+# Downloaded Spoons that can be reinstalled
+# Uncomment if you want to exclude Spoons from version control
+# Spoons/
+
+# Notes 
+# HammerspoonNotes.ini
