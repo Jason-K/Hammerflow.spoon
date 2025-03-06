@@ -7,7 +7,7 @@ require('hs.ipc')
 -- -----------------------------------------------------------------------
 -- SETTINGS
 -- -----------------------------------------------------------------------
-
+hs.console.clearConsole()
 hs.console.darkMode(true)
 hs.window.animationDuration = 0.3
 
@@ -180,7 +180,63 @@ end):start()
 hs.eventtap.new({hs.eventtap.event.types.leftMouseUp, hs.eventtap.event.types.rightMouseUp}, function()
     stopWindowAction()
 end):start()
+
+-- -----------------------------------------------------------------------
+-- MODULE - jjkHotkeys
+-- -----------------------------------------------------------------------
+
+-- Load the Spoon
+hs.loadSpoon("jjkHotkeys")
+
+-- Optionally enable debug logging
+spoon.jjkHotkeys:toggleDebug(true)
+
+-- Define our actual hotkeys:
+-- This example shows:
+--   - Single tap of 'a' -> alert "Single A"
+--   - Double tap of 'a' -> alert "Double A"
+--   - Press/hold 'a' -> alert "Held A"
+--   - Left+right specific combos: left cmd + v triggers a different action than right cmd + v
+--   - Double-tap of modifiers: double-tap right cmd
+--   - A sequence: a -> b -> calls a function
+--   - A layer "myLayer" that triggers if user does hold=layer, etc.
+spoon.jjkHotkeys:bindHotkeys({
+  taps = {
+    ["a"] = {
+      single  = function() hs.alert("Single A!") end,
+      double  = function() hs.alert("Double A!") end,
+      hold    = function() hs.alert("Held A!") end,
+    },
+  },
+  combos = {
+    ["v"] = {
+      ["lcmd"] = function() hs.alert("Left CMD + V!") end,
+      ["rcmd"] = function() hs.alert("Right CMD + V!") end,
+    },
+  },
+  modTaps = {
+    ["rcmd"] = {
+      double = function() hs.alert("Double-tap right cmd!") end,
+    },
+  },
+  sequences = {
+    seqAB = {sequence={"a","b"}, action=function() hs.alert("You typed a,b!") end},
+  },
+  layers = {
+    myLayer = {
+      sequences = {
+        -- For instance, once you're in 'myLayer', pressing x->y triggers a function
+        xy = {sequence={"x","y"}, action=function() hs.alert("myLayer X->Y") end},
+      },
+    }
+  }
+})
+
+-- Finally, start it
+spoon.jjkHotkeys:start()
+
+
 -- -----------------------------------------------------------------------
 
 -- Update the alert message to include the new functionality
-hs.alert.show("Clipboard Monitor Running")
+hs.alert.show("Hammerspoon running")

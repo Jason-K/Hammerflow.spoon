@@ -1,0 +1,122 @@
+{
+  "name": "KeyTapper",
+  "version": "1.0",
+  "author": "Hammerspoon",
+  "license": "MIT - https://opensource.org/licenses/MIT",
+  "homepage": "https://github.com/Hammerspoon/Spoons",
+  "download_url": "https://github.com/Hammerspoon/Spoons/raw/master/Spoons/KeyTapper.spoon.zip",
+  "description": "A Spoon that lets you assign callbacks to keyboard events including multi-taps and key combinations",
+  "doc": "A Spoon that lets you assign callbacks to keyboard events including multi-taps and key combinations\n\nFeatures:\n  * Detect multi-taps (pressing the same key multiple times in a short timeframe)\n  * Detect key combinations (pressing multiple keys together or in sequence)\n  * Customizable timeouts for multi-tap and sequence detection",
+  "items": [
+    {
+      "def": "KeyTapper:debugEnable(enable)",
+      "desc": "Enable or disable debug logging",
+      "parameters": [
+        {
+          "name": "enable",
+          "desc": "boolean: true to enable debug logging, false to disable"
+        }
+      ],
+      "returns": [
+        {
+          "name": "KeyTapper",
+          "desc": "The KeyTapper object"
+        }
+      ]
+    },
+    {
+      "def": "KeyTapper:handleMultiTap(key, count, fn)",
+      "desc": "Register a callback function for when a key is tapped multiple times",
+      "parameters": [
+        {
+          "name": "key",
+          "desc": "string: the key to watch (from hs.keycodes.map)"
+        },
+        {
+          "name": "count",
+          "desc": "number: how many taps to watch for (2 for double-tap, 3 for triple-tap, etc.)"
+        },
+        {
+          "name": "fn",
+          "desc": "function: callback function to execute when the multi-tap is detected"
+        }
+      ],
+      "returns": [
+        {
+          "name": "KeyTapper",
+          "desc": "The KeyTapper object"
+        }
+      ]
+    },
+    {
+      "def": "KeyTapper:handleCombination(keys, fn)",
+      "desc": "Register a callback function for when a combination of keys is pressed",
+      "parameters": [
+        {
+          "name": "keys",
+          "desc": "table: list of keys that make up the combination (strings from hs.keycodes.map)"
+        },
+        {
+          "name": "fn",
+          "desc": "function: callback function to execute when the combination is detected"
+        }
+      ],
+      "returns": [
+        {
+          "name": "KeyTapper",
+          "desc": "The KeyTapper object"
+        }
+      ]
+    },
+    {
+      "def": "KeyTapper:handleSequence(keys, fn)",
+      "desc": "Register a callback function for when a sequence of keys is pressed in order",
+      "parameters": [
+        {
+          "name": "keys",
+          "desc": "table: ordered list of keys for the sequence (strings from hs.keycodes.map)"
+        },
+        {
+          "name": "fn",
+          "desc": "function: callback function to execute when the sequence is detected"
+        }
+      ],
+      "returns": [
+        {
+          "name": "KeyTapper",
+          "desc": "The KeyTapper object"
+        }
+      ]
+    },
+    {
+      "def": "KeyTapper:start()",
+      "desc": "Start monitoring keyboard events",
+      "returns": [
+        {
+          "name": "KeyTapper",
+          "desc": "The KeyTapper object"
+        }
+      ]
+    },
+    {
+      "def": "KeyTapper:stop()",
+      "desc": "Stop monitoring keyboard events",
+      "returns": [
+        {
+          "name": "KeyTapper",
+          "desc": "The KeyTapper object"
+        }
+      ]
+    },
+    {
+      "def": "KeyTapper:isRunning()",
+      "desc": "Check if KeyTapper is currently running",
+      "returns": [
+        {
+          "name": "boolean",
+          "desc": "Boolean indicating whether KeyTapper is running"
+        }
+      ]
+    }
+  ]
+}
