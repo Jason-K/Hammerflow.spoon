@@ -4,6 +4,9 @@
 ---
 --- Download: [https://github.com/Hammerspoon/Spoons/raw/master/Spoons/AutoCorrect.spoon.zip](https://github.com/Hammerspoon/Spoons/raw/master/Spoons/AutoCorrect.spoon.zip)
 
+-- Store module name
+local _MODULE_NAME = ...
+
 local obj = {}
 obj.__index = obj
 
@@ -159,12 +162,10 @@ end
 ---
 --- Parameters:
 ---  * None
----
---- Returns:
----  * The AutoCorrect object
 function obj:loadPatterns()
     -- Load patterns from separate file
-    local patterns = require(string.format("%s.patterns", (...)))
+    local patterns = require(string.format("%s.patterns", _MODULE_NAME))
+--    local patterns = require(string.format("%s.patterns", (...)))
     for trigger, replacement in pairs(patterns) do
         self:addPattern(trigger, replacement)
     end

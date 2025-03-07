@@ -3,6 +3,12 @@
 --- A Spoon that unifies multi-tap detection, left/right modifier awareness, layered (recursive) keybindings,
 --- and tap-versus-hold logic into a single system. 
 --- Users define their actual hotkeys in their master init.lua by calling :bindHotkeys().
+---
+--- Recognized key names for modifiers:
+---   - lshift, rshift
+---   - lctrl, rctrl
+---   - lcmd, rcmd
+---   - lalt, ralt
 
 local obj = {}
 obj.__index = obj
@@ -56,6 +62,16 @@ local masterSequence   = {}
 local sequenceTimer    = nil
 local activeLayer      = nil
 local leftRightModifiers = {} -- tracks which specific left/right modifiers are down
+local lastModifierState = {}  -- tracks the previous state of modifiers
+local processedSingleTap = {} -- tracks which modifiers have had their single tap processed
+local modifierReleaseTimer = {} -- for handling proper single tap timeouts
+local keyComboFiredFor = {} -- track which keys have already had combos fired
+local modifierPressStartTime = {} -- when modifiers were first pressed
+local firedCombos = {} -- track which combos have been fired to prevent duplicates
+local regularKeyWasPressed = {} -- track if a regular key was pressed with a modifier
+local pendingSingleTaps = {} -- track modifiers with potential single taps
+local pendingSingleTapTimers = {} -- timers for delayed single tap processing
+local holdFiredFor = {} -- track which modifiers have already fired their hold action
 
 -- watchers
 local watchers         = {}
@@ -98,6 +114,25 @@ local function resetSequence(reason)
     end
 end
 
+-- Cancel pending single tap for a modifier
+local function cancelPendingSingleTap(mod)
+    if pendingSingleTapTimers[mod] then
+        pendingSingleTapTimers[mod]:stop()
+        pendingSingleTapTimers[mod] = nil
+    end
+    pendingSingleTaps[mod] = nil
+end
+
+-- Cancel hold timer for a modifier and mark it as used with a regular key
+local function cancelHoldTimer(mod)
+    if holdTimer[mod] then
+        holdTimer[mod]:stop()
+        holdTimer[mod] = nil
+    end
+    holdFiredFor[mod] = nil
+    regularKeyWasPressed[mod] = true
+end
+
 ----------------------------------------------------------------------
 -- LOOKUP AND INVOKE FUNCTIONS
 -- These read from obj.hotkeyDefinitions to find an appropriate action
@@ -110,9 +145,25 @@ local function handleTap(keyName, nTaps, isHold)
 
     local definition
     if nTaps == 1 and not isHold then
-        definition = tapDefs.single
+        -- Add a delay before executing the single-tap action to check for double-tap
+        hs.timer.doAfter(obj.multiTapTimeout, function()
+            if keyTapCount[keyName] == 1 then
+                definition = tapDefs.single
+                if type(definition) == "function" then
+                    definition()
+                elseif type(definition) == "table" and definition.layer then
+                    activeLayer = definition.layer
+                    if definition.message then hs.alert.show(definition.message) end
+                elseif definition then
+                    dbg("Tap: found definition with unrecognized type: " .. type(definition))
+                else
+                    dbg("No matching tap definition for key=%s taps=%d hold=%s", keyName, nTaps, tostring(isHold))
+                end
+            end
+        end)
     elseif nTaps == 2 then
         definition = isHold and tapDefs.doubleHold or tapDefs.double
+        keyTapCount[keyName] = 0 -- Reset tap count after handling double tap
     elseif isHold then
         definition = tapDefs.hold
     end
@@ -130,33 +181,37 @@ local function handleTap(keyName, nTaps, isHold)
 end
 
 local function handleCombo(keyName)
-    -- This function now uses leftRightModifiers to check for specific left/right modifiers
-    local combo = obj.hotkeyDefinitions.combos[keyName]
-    if not combo then return end
-    
-    -- Look for patterns like "lcmd+v", "rshift+a", etc.
-    for comboSpec, action in pairs(combo) do
-        local requiredMods = {}
-        for mod in comboSpec:gmatch("[^+]+") do
-            requiredMods[mod] = true
+  local comboDefs = obj.hotkeyDefinitions.combos[keyName]
+  if not comboDefs then return false end
+
+  -- Collect active left/right modifiers into a string (e.g. "lcmd+rctrl")
+  local activeMods = {}
+  for mod, isActive in pairs(leftRightModifiers) do
+    if isActive then table.insert(activeMods, mod) end
+  end
+  local comboKey = table.concat(activeMods, "+")
+
+  if keyTapCount[keyName] == 1 then
+    -- Wait multiTapTimeout before firing a single press
+    hs.timer.doAfter(obj.multiTapTimeout, function()
+      if keyTapCount[keyName] == 1 then
+        local singleAction = comboDefs[comboKey]
+        if type(singleAction) == "function" then
+          singleAction()
         end
-        
-        -- Check if all required modifiers are active and no extra ones
-        local allMatch = true
-        for mod, _ in pairs(requiredMods) do
-            if not leftRightModifiers[mod] then
-                allMatch = false
-                break
-            end
-        end
-        
-        if allMatch then
-            if type(action) == "function" then
-                action()
-                return
-            end
-        end
+        keyTapCount[keyName] = 0
+      end
+    end)
+  elseif keyTapCount[keyName] == 2 then
+    -- Double pressed within multiTapTimeout
+    local doubleAction = comboDefs[comboKey .. "2"]
+    if type(doubleAction) == "function" then
+      doubleAction()
     end
+    keyTapCount[keyName] = 0
+  end
+
+  return true
 end
 
 local function handleSequence(seq)
@@ -198,35 +253,145 @@ end
 local function flagsChangedCallback(evt)
     -- Update our left/right modifier tracking
     local rawFlags = evt:getRawEventData().CGEventData.flags
-    leftRightModifiers = getLeftRightModifiers(rawFlags)
+    local newModifiers = getLeftRightModifiers(rawFlags)
+    local modChanges = {}
+    local now = hs.timer.secondsSinceEpoch()
     
-    -- If there's a key in the combo definitions that matches just these modifiers,
-    -- handle it (e.g., for double-tap of cmd key alone)
-    local activeModCount = 0
-    local lastActiveMod = nil
-    for mod, active in pairs(leftRightModifiers) do
-        if active then
-            activeModCount = activeModCount + 1
-            lastActiveMod = mod
+    -- Find which modifiers were pressed or released
+    for mod, _ in pairs(newModifiers) do
+        if newModifiers[mod] and not leftRightModifiers[mod] then
+            modChanges[mod] = "pressed"
+            modifierPressStartTime[mod] = now
         end
     end
     
-    -- If there's exactly one modifier, check for double-taps of that modifier
-    if activeModCount == 1 and lastActiveMod then
-        local dt = hs.timer.secondsSinceEpoch() - (lastKeyTime[lastActiveMod] or 0)
-        if dt <= obj.multiTapTimeout then
-            keyTapCount[lastActiveMod] = (keyTapCount[lastActiveMod] or 0) + 1
-            if keyTapCount[lastActiveMod] == 2 then
-                -- Double-tap of a modifier key alone
-                local modTaps = obj.hotkeyDefinitions.modTaps
-                if modTaps and modTaps[lastActiveMod] and modTaps[lastActiveMod].double then
-                    modTaps[lastActiveMod].double()
+    for mod, _ in pairs(leftRightModifiers) do
+        if not newModifiers[mod] then
+            modChanges[mod] = "released"
+        end
+    end
+    
+    -- Update our tracking state
+    leftRightModifiers = newModifiers
+    
+    -- Reset tracking when modifiers change
+    if next(modChanges) then
+        -- Only reset fired combos for modifiers that changed
+        for mod, _ in pairs(modChanges) do
+            for comboId, _ in pairs(firedCombos or {}) do
+                if comboId and comboId:find(mod) then
+                    firedCombos[comboId] = nil
                 end
             end
-        else
-            keyTapCount[lastActiveMod] = 1
         end
-        lastKeyTime[lastActiveMod] = hs.timer.secondsSinceEpoch()
+    end
+    
+    -- Handle pressed modifiers
+    for mod, change in pairs(modChanges) do
+        if change == "pressed" then
+            dbg("%s pressed", mod)
+            
+            -- Reset tracking for this modifier
+            regularKeyWasPressed[mod] = false
+            holdFiredFor[mod] = false
+            
+            -- Cancel any pending single tap for this modifier
+            cancelPendingSingleTap(mod)
+            
+            -- Count taps within timeout window
+            if lastKeyTime[mod] and (now - lastKeyTime[mod]) <= obj.multiTapTimeout then
+                keyTapCount[mod] = (keyTapCount[mod] or 0) + 1
+                dbg("%s tapped %d times", mod, keyTapCount[mod])
+                
+                -- Handle double-tap immediately 
+                if keyTapCount[mod] >= 2 then
+                    local modTaps = obj.hotkeyDefinitions.modTaps
+                    if modTaps and modTaps[mod] and modTaps[mod].double then
+                        dbg("Executing double-tap for %s", mod)
+                        modTaps[mod].double()
+                        processedSingleTap[mod] = true
+                        keyTapCount[mod] = 0 -- Reset count after handling
+                    end
+                end
+            else
+                keyTapCount[mod] = 1
+                dbg("First tap of %s", mod)
+            end
+            
+            -- Update timing tracking
+            lastKeyTime[mod] = now
+            pressInProgress[mod] = true
+            
+            -- Set up hold timer
+            if holdTimer[mod] then
+                holdTimer[mod]:stop()
+                holdTimer[mod] = nil
+            end
+            
+            holdTimer[mod] = hs.timer.doAfter(obj.tapHoldTimeout, function()
+                -- Only trigger hold if:
+                -- 1. Modifier is still pressed
+                -- 2. No regular key was pressed with this modifier
+                -- 3. We haven't already fired the hold action for this press
+                if pressInProgress[mod] and leftRightModifiers[mod] and 
+                   not regularKeyWasPressed[mod] and not holdFiredFor[mod] then
+                    local modTaps = obj.hotkeyDefinitions.modTaps
+                    if modTaps and modTaps[mod] and modTaps[mod].hold then
+                        dbg("Executing hold for %s", mod)
+                        modTaps[mod].hold()
+                        processedSingleTap[mod] = true
+                        holdFiredFor[mod] = true
+                    end
+                end
+            end)
+            
+        elseif change == "released" then
+            dbg("%s released", mod)
+            
+            -- Cancel hold timer
+            if holdTimer[mod] then
+                holdTimer[mod]:stop()
+                holdTimer[mod] = nil
+            end
+            
+            -- Calculate press duration
+            local pressDuration = now - (modifierPressStartTime[mod] or 0)
+            dbg("%s was pressed for %.2f seconds", mod, pressDuration)
+            
+            -- Only consider single tap if:
+            -- 1. Press was quick (not a hold)
+            -- 2. No regular key was pressed with this modifier
+            -- 3. Not already processed as part of double-tap
+            -- 4. It's the first tap (tap count is 1)
+            if pressDuration < obj.tapHoldTimeout and not regularKeyWasPressed[mod] and 
+               not processedSingleTap[mod] and keyTapCount[mod] == 1 then
+                
+                -- Set up a delayed timer for single tap processing
+                -- This gives us time to see if a second tap comes in
+                pendingSingleTaps[mod] = true
+                
+                if pendingSingleTapTimers[mod] then
+                    pendingSingleTapTimers[mod]:stop()
+                end
+                
+                pendingSingleTapTimers[mod] = hs.timer.doAfter(obj.multiTapTimeout, function()
+                    -- Only execute if still pending and no second tap came in
+                    if pendingSingleTaps[mod] then
+                        local modTaps = obj.hotkeyDefinitions.modTaps
+                        if modTaps and modTaps[mod] and modTaps[mod].single then
+                            dbg("Executing delayed single tap for %s", mod)
+                            modTaps[mod].single()
+                        end
+                        pendingSingleTaps[mod] = nil
+                    end
+                end)
+            end
+            
+            pressInProgress[mod] = false
+            processedSingleTap[mod] = false
+            regularKeyWasPressed[mod] = false
+            holdFiredFor[mod] = false
+        end
     end
     
     return false
@@ -242,65 +407,127 @@ local function keyEventCallback(evt)
     if etype ~= hs.eventtap.event.types.keyDown and etype ~= hs.eventtap.event.types.keyUp then
         return false
     end
-
-    local now     = hs.timer.secondsSinceEpoch()
+    
+    local now = hs.timer.secondsSinceEpoch()
     local keyCode = evt:getKeyCode()
     local keyName = keyNameFromCode(keyCode)
-    local isDown  = (etype == hs.eventtap.event.types.keyDown)
+    local isDown = (etype == hs.eventtap.event.types.keyDown)
     
-    -- Update left/right modifier state for any key event too
+    -- Update left/right modifier state for any key event
     local rawFlags = evt:getRawEventData().CGEventData.flags
     leftRightModifiers = getLeftRightModifiers(rawFlags)
-
+    
     if isDown then
-        local dt = now - (lastKeyTime[keyName] or 0)
-        if dt > obj.multiTapTimeout then
-            keyTapCount[keyName] = 1
-        else
-            keyTapCount[keyName] = (keyTapCount[keyName] or 0) + 1
+        -- Key down logic
+        dbg("Key down: %s", keyName)
+        
+        -- Mark that regular keys are being pressed with modifiers
+        -- Also cancel any pending single tap actions and hold timers for these modifiers
+        for mod, _ in pairs(leftRightModifiers) do
+            cancelHoldTimer(mod) -- This now handles marking regularKeyWasPressed and canceling the timer
+            cancelPendingSingleTap(mod)
         end
-
+        
+        if lastKeyTime[keyName] and (now - lastKeyTime[keyName]) <= obj.multiTapTimeout then
+            keyTapCount[keyName] = (keyTapCount[keyName] or 0) + 1
+            dbg("%s tapped %d times", keyName, keyTapCount[keyName])
+        else
+            keyTapCount[keyName] = 1
+        end
+        
+        lastKeyTime[keyName] = now
         pressInProgress[keyName] = true
-        lastKeyTime[keyName]     = now
-
-        if holdTimer[keyName] then holdTimer[keyName]:stop() end
+        
+        -- Set up hold detection
+        if holdTimer[keyName] then 
+            holdTimer[keyName]:stop() 
+        end
+        
         holdTimer[keyName] = hs.timer.doAfter(obj.tapHoldTimeout, function()
             if pressInProgress[keyName] then
-                -- The user held the key
                 handleTap(keyName, keyTapCount[keyName], true)
             end
         end)
-    else
-        -- keyUp
+        
+        -- Check for combo matches that need to be handled on key down
+        if next(leftRightModifiers) then
+            -- For key down events, only handle certain combos (like double-tapping 'f' with cmd held)
+            for comboSpec, action in pairs(obj.hotkeyDefinitions.combos[keyName] or {}) do
+                -- Check for tap number suffix (e.g., lcmd2)
+                if comboSpec:match("%d+$") then
+                    local mod, tapCount = comboSpec:match("(.*)(%d+)$")
+                    tapCount = tonumber(tapCount)
+                    
+                    if leftRightModifiers[mod] and keyTapCount[keyName] == tapCount then
+                        dbg("Multi-tap combo matched: %s%d", mod, tapCount)
+                        
+                        -- Cancel hold and single tap for all modifiers
+                        for usedMod, _ in pairs(leftRightModifiers) do
+                            cancelHoldTimer(usedMod)
+                            cancelPendingSingleTap(usedMod)
+                        end
+                        
+                        -- Create tracking ID and record that it fired
+                        local activeModsStr = ""
+                        for activeMod, isActive in pairs(leftRightModifiers) do
+                            if isActive then
+                                activeModsStr = activeModsStr .. activeMod .. "+"
+                            end
+                        end
+                        activeModsStr = activeModsStr .. keyName
+                        
+                        firedCombos[activeModsStr] = firedCombos[activeModsStr] or {}
+                        firedCombos[activeModsStr][tapCount] = true
+                        
+                        action()
+                        return false
+                    end
+                end
+            end
+        end
+        
+        -- Prevent single-tap combo from firing if multi-tap combo is detected
+        if keyTapCount[keyName] > 1 then
+            return false
+        end
+        
+    else -- Key up
+        dbg("Key up: %s", keyName)
         pressInProgress[keyName] = false
+        
+        -- Stop hold timer
         if holdTimer[keyName] then
             holdTimer[keyName]:stop()
             holdTimer[keyName] = nil
         end
-
-        local downTime = lastKeyTime[keyName] or 0
-        local pressedDuration = (now - downTime)
-
-        local wasHold = (pressedDuration >= obj.tapHoldTimeout)
+        
+        -- Calculate if this was a tap or hold
+        local pressDuration = now - (lastKeyTime[keyName] or 0)
+        local wasHold = pressDuration >= obj.tapHoldTimeout
+        
         if not wasHold then
-            -- treat as a quick tap
+            -- Regular tap handling
             handleTap(keyName, keyTapCount[keyName], false)
         end
-
-        -- Check for combos (e.g., lcmd+v)
-        if next(leftRightModifiers) ~= nil then
-            handleCombo(keyName)
+        
+        -- Check for combos on key up, but only for single taps (not multi-taps)
+        if next(leftRightModifiers) and keyTapCount[keyName] == 1 then
+            if handleCombo(keyName) then
+                dbg("Combo handled for %s", keyName)
+            end
         end
-
-        -- Add to sequence
+        
+        -- Add to sequence tracking
         table.insert(masterSequence, keyName)
         if sequenceTimer then sequenceTimer:stop() end
         sequenceTimer = hs.timer.doAfter(obj.sequenceTimeout, function()
             resetSequence("sequence timeout")
         end)
+        
+        -- Check for sequence matches
         handleSequence(masterSequence)
     end
-
+    
     return false
 end
 
@@ -323,10 +550,16 @@ end
 ---       "lcmd+lshift" = function() ... end,  -- Only if left cmd AND left shift are down
 ---       "rcmd" = function() ... end,         -- Only if right cmd is down
 ---     },
+---     ["f"] = {
+---       "lcmd" = function() ... end,         -- Single tap of 'f' with left cmd
+---       "lcmd2" = function() ... end,        -- Double tap of 'f' with left cmd
+---     },
 ---   },
 ---   modTaps = {
 ---     ["lcmd"] = {
 ---       double = function() ... end,  -- Double-tap left command
+---       single = function() ... end,  -- Single-tap left command
+---       hold = function() ... end,    -- Hold left command
 ---     },
 ---   },
 ---   sequences = {
@@ -380,6 +613,25 @@ function obj:start()
     }, keyEventCallback)
     watchers.keyboard:start()
 
+    -- Reset all state variables
+    keyState = {}
+    pressInProgress = {}
+    holdTimer = {}
+    lastKeyTime = {}
+    keyTapCount = {}
+    masterSequence = {}
+    leftRightModifiers = {}
+    lastModifierState = {}
+    processedSingleTap = {}
+    modifierReleaseTimer = {}
+    keyComboFiredFor = {}
+    modifierPressStartTime = {}
+    firedCombos = {}
+    regularKeyWasPressed = {}
+    pendingSingleTaps = {}
+    pendingSingleTapTimers = {}
+    holdFiredFor = {}
+    
     dbg("jjkHotkeys started")
     return self
 end
@@ -392,10 +644,34 @@ function obj:stop()
         watchers.keyboard:stop()
         watchers.keyboard = nil
     end
+    
+    -- Stop all timers
     if sequenceTimer then sequenceTimer:stop() end
+    
+    for _, timer in pairs(holdTimer) do
+        if timer then timer:stop() end
+    end
+    
+    for _, timer in pairs(modifierReleaseTimer) do
+        if timer then timer:stop() end
+    end
+    
+    for _, timer in pairs(pendingSingleTapTimers) do
+        if timer then timer:stop() end
+    end
+    
+    -- Reset all state
     sequenceTimer = nil
+    holdTimer = {}
+    modifierReleaseTimer = {}
     masterSequence = {}
     leftRightModifiers = {}
+    keyTapCount = {}
+    firedCombos = {}
+    regularKeyWasPressed = {}
+    pendingSingleTaps = {}
+    pendingSingleTapTimers = {}
+    holdFiredFor = {}
     return self
 end
 

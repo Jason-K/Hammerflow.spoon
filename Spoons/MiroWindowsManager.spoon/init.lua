@@ -24,18 +24,18 @@
 --- Download: [https://github.com/miromannino/miro-windows-manager/raw/master/MiroWindowsManager.spoon.zip](https://github.com/miromannino/miro-windows-manager/raw/master/MiroWindowsManager.spoon.zip)
 ---
 
+---@class cell
+---@field w number
+---@field h number
+---@field x number
+---@field y number
+
 local obj={}
 obj.__index = obj
 
 -- Metadata
 obj.name = "MiroWindowsManager"
 obj.version = "1.1"
-obj.author = "Miro Mannino <miro.mannino@gmail.com>"
-obj.homepage = "https://github.com/miromannino/miro-windows-management"
-obj.license = "MIT - https://opensource.org/licenses/MIT"
-
---- MiroWindowsManager.sizes
---- Variable
 --- The sizes that the window can have. 
 --- The sizes are expressed as dividend of the entire screen's size.
 --- For example `{2, 3, 3/2}` means that it can be 1/2, 1/3 and 2/3 of the total screen's size
@@ -52,7 +52,8 @@ obj.fullScreenSizes = {1, 4/3, 2}
 --- Variable
 --- The screen's size using `hs.grid.setGrid()`
 --- This parameter is used at the spoon's `:init()`
-obj.GRID = {w = 24, h = 24}
+-- obj.GRID = {w = 24, h = 24}
+obj.GRID = {w = 6, h = 4}
 
 obj._pressed = {
   up = false,
@@ -70,11 +71,12 @@ function obj:_nextStep(dim, offs, cb)
     local id = win:id()
     local screen = win:screen()
 
-    cell = hs.grid.get(win, screen)
+    local cell = hs.grid.get(win, screen)
 
     local nextSize = self.sizes[1]
     for i=1,#self.sizes do
-      if cell[dim] == self.GRID[dim] / self.sizes[i] and
+      if cell[dim] ~= nil and cell[axis] ~= nil and
+        cell[dim] == self.GRID[dim] / self.sizes[i] and
         (cell[axis] + (offs and cell[dim] or 0)) == (offs and self.GRID[dim] or 0)
         then
           nextSize = self.sizes[(i % #self.sizes) + 1]
@@ -98,7 +100,7 @@ function obj:_nextFullScreenStep()
     local id = win:id()
     local screen = win:screen()
 
-    cell = hs.grid.get(win, screen)
+    local cell = hs.grid.get(win, screen)
 
     local nextSize = self.fullScreenSizes[1]
     for i=1,#self.fullScreenSizes do
@@ -135,7 +137,7 @@ function obj:_fullDimension(dim)
     local win = hs.window.frontmostWindow()
     local id = win:id()
     local screen = win:screen()
-    cell = hs.grid.get(win, screen)
+    local cell = hs.grid.get(win, screen)
 
     if (dim == 'x') then
       cell = '0,0 ' .. self.GRID.w .. 'x' .. self.GRID.h
