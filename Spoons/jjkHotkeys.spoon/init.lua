@@ -303,11 +303,12 @@ local function flagsChangedCallback(evt)
                 keyTapCount[mod] = (keyTapCount[mod] or 0) + 1
                 dbg("%s tapped %d times", mod, keyTapCount[mod])
                 
-                -- Handle double-tap immediately 
-                if keyTapCount[mod] >= 2 then
+                -- Handle double-tap immediately when detected
+                if keyTapCount[mod] == 2 then
+                    -- Improved double-tap detection
                     local modTaps = obj.hotkeyDefinitions.modTaps
                     if modTaps and modTaps[mod] and modTaps[mod].double then
-                        dbg("Executing double-tap for %s", mod)
+                        dbg("Double-tap detected - calling ClipboardFormatter:formatSelection()")
                         modTaps[mod].double()
                         processedSingleTap[mod] = true
                         keyTapCount[mod] = 0 -- Reset count after handling
@@ -328,7 +329,7 @@ local function flagsChangedCallback(evt)
                 holdTimer[mod] = nil
             end
             
-            holdTimer[mod] = hs.timer.doAfter(obj.tapHoldTimeout, function()
+            holdTimer[mod] = hs.timer.doAfter(obj.holdDelay or obj.tapHoldTimeout, function()
                 -- Only trigger hold if:
                 -- 1. Modifier is still pressed
                 -- 2. No regular key was pressed with this modifier
@@ -374,7 +375,7 @@ local function flagsChangedCallback(evt)
                     pendingSingleTapTimers[mod]:stop()
                 end
                 
-                pendingSingleTapTimers[mod] = hs.timer.doAfter(obj.multiTapTimeout, function()
+                pendingSingleTapTimers[mod] = hs.timer.doAfter(obj.doubleTapDelay or obj.multiTapTimeout, function()
                     -- Only execute if still pending and no second tap came in
                     if pendingSingleTaps[mod] then
                         local modTaps = obj.hotkeyDefinitions.modTaps

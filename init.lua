@@ -107,82 +107,56 @@ Install:andUse("HeadphoneAutoPause",
 -- -----------------------------------------------------------------------
 
 -- Optionally enable debug logging
-spoon.jjkHotkeys:toggleDebug(false)
+spoon.jjkHotkeys:toggleDebug(true)  -- Enable debug to see events in the console
 
-
-
---[[
-  
--- Define our actual hotkeys:
--- This example shows:
---   - Single tap of 'a' -> alert "Single A"
---   - Double tap of 'a' -> alert "Double A"
---   - Press/hold 'a' -> alert "Held A"
---   - Left+right specific combos: left cmd + v triggers a different action than right cmd + v
---   - Double-tap of modifiers: double tap right cmd
---   - A sequence: a > b > calls a function
---   - A layer "myLayer" that triggers if user does hold=layer, etc.
-
--- EXAMPLE DEFINITIONS
-
-spoon.jjkHotkeys:bindHotkeys({
-  taps = {
-    ["a"] = {
-      single = function() hs.alert("Single A!") end,
-      double = function() hs.alert("Double A!") end,
-      hold   = function() hs.alert("Held A!") end,
-    },
-  },
-  combos = {
-    ["v"] = {
-      ["lcmd"] = function() hs.alert("Left CMD + V!") end,
-      ["rcmd"] = function() hs.alert("Right CMD + V!") end,
-    },
-    ["f"] = {
-      ["lcmd"] = function() hs.alert("Single F with Command!") end,
-      ["lcmd2"] = function() hs.alert("Double F with Command!") end,
-    },
-  },
-  modTaps = {
-    ["rcmd"] = {
-      double = function() spoon.ClipboardFormatter:formatSelection() end,
-    },
-    ["rctrl"] = {
-      double = function() spoon.ClipboardFormatter:format() end,
-    },
-    ["lcmd"] = {
-      -- single = function() hs.alert("Single left command!") end,
-      double = function() hs.alert("Double-tap left command!") end,
-      -- hold = function() hs.alert("Held left command!") end,
-    },
-    ["lctrl"] = {
-      single = function() hs.alert("Single left control!") end,
-      double = function() hs.alert("Double-tap left control!") end,
-    }
-  },
-  sequences = {
-    seqAB = { sequence = { "a", "b" }, action = function() hs.alert("You typed a,b!") end },
-  },
-  layers = {
-    myLayer = {
-      sequences = {
-        -- For instance, once you're in 'myLayer', pressing x->y triggers a function
-        xy = { sequence = { "x", "y" }, action = function() hs.alert("myLayer X->Y") end },
-      },
-    }
-  }
-})
+-- Safely wrap clipboard functions with error handling
+local function safeFormatSelection()
+    local success, result = pcall(function()
+        return spoon.ClipboardFormatter:formatSelection()
+    end)
     
-]]
+    if not success then
+        print("Error in formatSelection:", result)
+        hs.alert.show("Error formatting selection")
+        return false
+    end
+    
+    return result
+end
+
+local function safeFormatClipboard()
+    local success, result = pcall(function()
+        return spoon.ClipboardFormatter:formatClipboard()
+    end)
+    
+    if not success then
+        print("Error in formatClipboard:", result)
+        hs.alert.show("Error formatting clipboard")
+        return false
+    end
+    
+    return result
+end
 
 spoon.jjkHotkeys:bindHotkeys({
   modTaps = {
     ["rcmd"] = {
-      double = function() spoon.ClipboardFormatter:formatSelection() end,
-      hold = function() spoon.ClipboardFormatter:formatClipboard() end,
+      double = function() 
+          print("Double-tap rcmd detected - calling ClipboardFormatter:formatSelection()")
+          safeFormatSelection()
+      end,
+      hold = function() 
+          print("Hold rcmd detected - calling ClipboardFormatter:formatClipboard()")
+          safeFormatClipboard()
+      end,
     },
   },
 })
+
+-- Optimized timing parameters for rcmd tap/double-tap/hold detection
+spoon.jjkHotkeys.doubleTapDelay = 0.2    -- Shorter double tap window (200ms) for faster responsiveness
+spoon.jjkHotkeys.holdDelay = 0.35        -- Moderate hold delay (350ms)
+spoon.jjkHotkeys.multiTapTimeout = 0.25  -- Multi-tap timeout slightly longer than double tap delay
 
 -- Finally, start it
 spoon.jjkHotkeys:start()

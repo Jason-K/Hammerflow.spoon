@@ -225,8 +225,13 @@ function obj:handleCombinations(input)
     -- Convert input into array of numbers, handling both space and no-space cases
     local numbers = {}
     -- Match numbers that are followed by optional spaces and 'c', or are at the end of string
-    for num in input:gmatch("%s*(%d+)%s*[c]?%s*") do
+    for num in input:gmatch("%s*(%d+)%s*[cC]?%s*") do
         table.insert(numbers, tonumber(num))
+    end
+    
+    -- Check if we have at least two numbers to process
+    if #numbers < 2 then
+        return nil
     end
     
     -- Sort numbers from largest to smallest
@@ -251,18 +256,22 @@ function obj:handleCombinations(input)
     end
     
     -- Format output string with proper spacing, only showing % on final result
-    local resultString = string.format("%d", math.tointeger(math.floor(numbers[1] * 100 + 0.5)))
+    local resultString = string.format("%d", math.floor(numbers[1] * 100 + 0.5))
+    
     for i = 2, #numbers do
+        local num_i_percent = math.floor(numbers[i] * 100 + 0.5)
+        local result_i_percent = math.floor(results[i] * 100 + 0.5)
+        
         if i < #numbers then
             -- For intermediate steps, don't show percentage sign
             resultString = resultString .. string.format(" c %d = %d", 
-                math.tointeger(math.floor(numbers[i] * 100 + 0.5)),
-                math.tointeger(math.floor(results[i] * 100 + 0.5)))
+                num_i_percent,
+                result_i_percent)
         else
             -- For the final result, include the percentage sign
             resultString = resultString .. string.format(" c %d = %d%%", 
-                math.tointeger(math.floor(numbers[i] * 100 + 0.5)),
-                math.tointeger(math.floor(results[i] * 100 + 0.5)))
+                num_i_percent,
+                result_i_percent)
         end
     end
     
@@ -811,53 +820,94 @@ function obj:compareByteArrays(arr1, arr2)
 end
 
 function obj:processClipboard(content)
-    if not content then return nil end
+    if not content or content == "" then return nil end
     
-    -- Check for phone numbers
-    if content:find(';') then
+    -- Quick pre-check for common patterns to avoid running all checks
+    local hasSlash = content:find('/')
+    local hasDollar = content:find('%$')
+    local hasSemicolon = content:find(';')
+    local hasDash = content:find('%-')
+    local hasEquals = content:find('=')
+    local hasLowerC = content:find('[cC]')
+    local hasPD = content:lower():find('pd')
+    
+    -- Most common case - check for arithmetic expressions first
+    if hasDollar or content:match("[%+%-%*/]") then
+        if self:isArithmeticExpression(content) then
+            local arith = self:processArithmeticExpression(content)
+            if arith then return arith end
+        end
+    end
+    
+    -- Check for phone numbers (these are quick to identify)
+    if hasSemicolon then
         local phone = self:handlePhoneNumber(content)
         if phone then return phone end
     end
-    
-    -- Check for arithmetic expressions (including currency math)
-    if self:isArithmeticExpression(content) then
-        local arith = self:processArithmeticExpression(content)
-        if arith then return arith end
-    end
 
-    -- Check for PD conversion (case insensitive)
-    if content:lower():find('pd') then
+    -- Check for PD conversion (quick specific pattern)
+    if hasPD then
         local pd = self:handlePDConversion(content)
         if pd then return pd end
     end
 
     -- Check for combination equations with 'c'
-    if content:lower():find('%d+%s*c%s*%d+') then
+    if hasLowerC and content:match('%d+') then
         local comb = self:handleCombinations(content)
         if comb then return comb end
     end
 
-    -- Check for date range (looking for '/' and 'to' or 'and')
-    if content:find('/') and (content:lower():find('to') or content:lower():find('and')) then
+    -- Check for date range
+    if hasSlash and (content:lower():find('to') or content:lower():find('and') or content:find('%-')) then
         local dateRange = self:processDateRange(content)
         if dateRange then return dateRange end
     end
 
     -- Check for rating strings (pattern with '-' and '=')
-    if content:find('%-') and content:find('=') then
+    if hasDash and hasEquals then
         local rating = self:handleRatingString(content)
         if rating then return rating end
     end
 
-    -- Check for hammerspoon logs
+    -- Check for hammerspoon logs (less common)
     if content:find('%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:') then
         local strippedLogs = self:stripDateTimeStamps(content)
         if strippedLogs then return strippedLogs end
     end
 
+    -- Custom input handler for specific formats
     local inputRes = self:handleInput(content)
     if inputRes then return inputRes end
 
+    return content
+end
+
+function obj:getClipboardContent()
+    -- Try standard pasteboard first
+    local content = hs.pasteboard.getContents()
+    
+    -- If that fails, try alternative methods
+    if not content or content == "" then
+        -- Try to get content directly from pasteboard with alternate methods
+        -- First try to read using the find pasteboard (which some apps may use)
+        content = hs.pasteboard.getContents("find")
+        
+        if not content or content == "" then
+            -- Try to read using NSPasteboard directly via osascript as a last resort
+            local script = [[
+                set theContent to ""
+                tell application "System Events"
+                    set theContent to the clipboard as text
+                end tell
+                return theContent
+            ]]
+            local ok, result = hs.osascript.applescript(script)
+            if ok then
+                content = result
+            end
+        end
+    end
+    
     return content
 end
 
@@ -920,72 +970,142 @@ function obj:formatClipboard()
 end
 
 function obj:formatSelection()
-    -- Save original clipboard
+    -- First save the original clipboard content
     local originalClipboard = hs.pasteboard.getContents()
     
-    -- Clear the clipboard first to ensure we can detect if our copy succeeded
+    -- Clear the clipboard *completely* to ensure we can detect when new content arrives
     hs.pasteboard.clearContents()
     
-    -- Send copy command (Command+C) to get selected text
-    hs.eventtap.keyStroke({"cmd"}, "c")
+    -- Add a small delay after clearing to ensure the system registers it
+    hs.timer.usleep(100000) -- 100ms
     
-    -- Use an approach with multiple attempts to get the clipboard content
-    local maxAttempts = 3
-    local gotContent = false
-    local postClipboard = nil
+    -- CRITICAL: Wait for all modifier keys to be released before continuing
+    -- This prevents the "cmd+c" from being interpreted as "hyper+c" by other apps
+    hs.timer.waitUntil(
+        function()
+            local mods = hs.eventtap.checkKeyboardModifiers()
+            return not (mods.cmd or mods.alt or mods.ctrl or mods.shift)
+        end,
+        function()
+            -- Now we can safely proceed with the copy operation
+            self:performSelectionCopy()
+        end,
+        0.05  -- Check every 50ms
+    )
     
-    for attempt = 1, maxAttempts do
-        -- Wait with increasing delay between attempts
-        hs.timer.usleep(250000 * attempt)  -- 250ms, 500ms, 750ms
-        
-        postClipboard = hs.pasteboard.getContents()
-        if postClipboard and postClipboard ~= "" then
-            gotContent = true
-            print("formatSelection: got content on attempt", attempt)
-            break
-        end
-        
-        print("formatSelection: no content on attempt", attempt)
-        -- Try copying again if still no content
-        if attempt < maxAttempts then
-            hs.eventtap.keyStroke({"cmd"}, "c")
+    return true -- Return immediately, the actual work will happen in the callback
+end
+
+-- This is a new helper function that will be called after modifiers are released
+function obj:performSelectionCopy()
+    -- Get the original clipboard content again (it might have changed)
+    local originalClipboard = hs.pasteboard.getContents()
+    
+    -- CRITICAL FIX: For some applications, need to specifically focus the window first
+    local currentApp = hs.application.frontmostApplication()
+    if currentApp then
+        local win = currentApp:focusedWindow()
+        if win then
+            win:focus()
         end
     end
     
-    if gotContent then
-        print("formatSelection received content:", postClipboard)
-        local formatted = self:processClipboard(postClipboard)
+    -- Use applescript for more reliable copying
+    hs.osascript.applescript([[
+        tell application "System Events" 
+            keystroke "c" using {command down}
+        end tell
+    ]])
+    
+    -- Wait for clipboard to update
+    hs.timer.usleep(300000) -- 300ms
+    
+    -- Get the clipboard content
+    local selectedText = hs.pasteboard.getContents()
+    
+    -- If that didn't work, try with eventtap as fallback (with protection)
+    if not selectedText or selectedText == "" or selectedText == originalClipboard then
+        -- Try once more with safe keyboard events
+        local function safeKeyStroke()
+            pcall(function()
+                -- Manually generate the key events in sequence with pauses
+                local cmdDown = hs.eventtap.event.newKeyEvent(hs.keycodes.map.cmd, true)
+                cmdDown:post()
+                hs.timer.usleep(50000) -- 50ms pause
+                
+                local cDown = hs.eventtap.event.newKeyEvent("c", true)
+                cDown:post()
+                hs.timer.usleep(50000) -- 50ms pause
+                
+                local cUp = hs.eventtap.event.newKeyEvent("c", false)
+                cUp:post()
+                hs.timer.usleep(50000) -- 50ms pause
+                
+                local cmdUp = hs.eventtap.event.newKeyEvent(hs.keycodes.map.cmd, false)
+                cmdUp:post()
+            end)
+        end
         
-        if formatted and formatted ~= postClipboard then
-            -- Use paste mechanism for faster replacement
+        safeKeyStroke()
+        
+        -- Wait again
+        hs.timer.usleep(300000) -- 300ms
+        
+        -- Try getting clipboard content again
+        selectedText = hs.pasteboard.getContents()
+    end
+    
+    -- Debug output
+    print("Original clipboard:", originalClipboard or "(empty)")
+    print("Selected text:", selectedText or "(empty)")
+    
+    -- Process the content if we got something new
+    if selectedText and selectedText ~= "" and selectedText ~= originalClipboard then
+        -- Process the selected text
+        local formatted = self:processClipboard(selectedText)
+        
+        if formatted and formatted ~= selectedText then
+            -- Update the clipboard with formatted content
             hs.pasteboard.setContents(formatted)
             
-            -- Paste the formatted content
-            hs.eventtap.keyStroke({"cmd"}, "v")
-            hs.alert.show("Formatted selection")
+            -- Wait briefly before pasting
+            hs.timer.usleep(50000) -- 50ms
+            
+            -- Use applescript for more reliable pasting
+            hs.osascript.applescript([[
+                tell application "System Events" 
+                    keystroke "v" using {command down}
+                end tell
+            ]])
+            
+            hs.alert.show("Formatted selection: " .. formatted)
             print("formatSelection produced result:", formatted)
+            return true
         else
-            -- If nothing changed, restore original clipboard
-            if originalClipboard then
+            -- No changes needed, restore clipboard
+            if originalClipboard then 
                 hs.pasteboard.setContents(originalClipboard)
             end
+            hs.alert.show("No formatting needed")
             print("formatSelection: No changes made to content")
-            hs.alert.show("No formatting applied")
+            return true
         end
     else
-        -- Restore original clipboard
+        -- Failed to get content, restore clipboard
         if originalClipboard then
             hs.pasteboard.setContents(originalClipboard)
         end
-        print("formatSelection: Failed to retrieve selected text")
         hs.alert.show("Could not get selected text")
+        print("formatSelection: Failed to retrieve selected text")
+        return false
     end
 end
 
 function obj:formatClipboardDirect()
-    -- Get clipboard content without sending copy command
-    local content = hs.pasteboard.getContents()
-    if content then
+    -- Get clipboard content using our robust method
+    local content = self:getClipboardContent()
+    
+    if content and content ~= "" then
         local formatted = self:processClipboard(content)
         if formatted and formatted ~= content then
             -- Use clipboard for faster operation instead of keystrokes
@@ -1000,7 +1120,23 @@ function obj:formatClipboardDirect()
 end
 
 function obj:init()
+    -- Load PD mapping data
     self:loadPDMapping()
+    
+    -- Make sure we have access to accessibility features for more reliable selection capture
+    -- Fix: Use hs.accessibilityState() function call instead of treating it as a table
+    if hs.accessibilityState and hs.accessibilityState() == false then
+        print("Warning: Accessibility features not enabled, formatSelection may be less reliable")
+    end
+    
+    -- Precompile pattern matches for faster execution
+    self.precompiledPatterns = {
+        slashPattern = ".*/.+",
+        currencyPattern = "%$.+",
+        percentPattern = "%d+%%",
+        phonePattern = "%d+;.+"
+    }
+    
     return self
 end
 
@@ -1197,7 +1333,7 @@ end
 
 function obj:stripDateTimeStamps(logContent)
     -- Remove datetime stamps from log content
-    local strippedContent = logContent:gsub("%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d: ", "")
+    local strippedContent = logContent:gsub("%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:%s*", "")
     return strippedContent
 end
 
