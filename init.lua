@@ -25,9 +25,11 @@ hs.loadSpoon("jjkHotkeys")
 -- CROSS-LIBRARY VARIABLES
 -- -----------------------------------------------------------------------
 
-local hyper       = { "cmd", "alt", "ctrl" }
-local shift_hyper = { "cmd", "alt", "ctrl", "shift" }
-local ctrl_cmd    = { "cmd", "ctrl" }
+local hyper       = { "lcmd", "lalt", "lctrl" }
+local super       = { "lcmd", "lalt", "lctrl", "lshift" }
+local superduper  = { "lcmd", "lalt", "lctrl", "lshift", "fn" }
+local ctrl_cmd    = { "lcmd", "lctrl" }
+local meh         = { "ralt", "rctrl" , "rshift" }
 local Install     = spoon.SpoonInstall
 
 -- -----------------------------------------------------------------------
@@ -53,7 +55,7 @@ reloadConfigWatcher:start()
 
 -- Bind hotkeys to the clipboard formatter
 spoon.ClipboardFormatter:bindHotkeys({
-  format = { shift_hyper, "v" },   -- Control+V to format clipboard contents
+  format = { super, "v" },   -- Control+V to format clipboard contents
   formatSelection = { hyper, "v" } -- Ctrl+Opt+Cmd+A to format selected text
 })
 

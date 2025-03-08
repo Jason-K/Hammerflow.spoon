@@ -423,44 +423,6 @@ function obj:splitDate(dateStr)
     return m, d, y
 end
 
-function obj:parseDate(dateStr)
-    print("parseDate input:", dateStr)
-    
-    local m, d, y = self:splitDate(dateStr)
-    if not (m and d and y) then return nil end
-    
-    -- Handle 2-digit years
-    if y < 100 then
-        local currentYear = tonumber(os.date("%Y"))
-        local currentCentury = math.floor(currentYear/100) * 100
-        if y + currentCentury > currentYear + 30 then
-            currentCentury = currentCentury - 100
-        end
-        y = y + currentCentury
-    end
-    
-    -- Basic validation
-    if m < 1 or m > 12 or d < 1 or d > 31 or y < 1900 then
-        return nil
-    end
-    
-    -- Validate days in month
-    local monthDays = {31,28,31,30,31,30,31,31,30,31,30,31}
-    if y % 4 == 0 and (y % 100 ~= 0 or y % 400 == 0) then
-        monthDays[2] = 29
-    end
-    if d > monthDays[m] then
-        return nil
-    end
-    
-    return {
-        year = y,
-        month = m,
-        day = d,
-        timestamp = os.time({year = y, month = m, day = d, hour = 12})
-    }
-end
-
 function obj:handleDateDifference(content)
     print("handleDateDifference input:", content)
     
@@ -870,7 +832,7 @@ function obj:processClipboard(content)
     end
 
     -- Check for combination equations with 'c'
-    if content:lower():find('c') then
+    if content:lower():find('%d+%s*c%s*%d+') then
         local comb = self:handleCombinations(content)
         if comb then return comb end
     end
@@ -885,6 +847,12 @@ function obj:processClipboard(content)
     if content:find('%-') and content:find('=') then
         local rating = self:handleRatingString(content)
         if rating then return rating end
+    end
+
+    -- Check for hammerspoon logs
+    if content:find('%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:') then
+        local strippedLogs = self:stripDateTimeStamps(content)
+        if strippedLogs then return strippedLogs end
     end
 
     local inputRes = self:handleInput(content)
@@ -952,30 +920,66 @@ function obj:formatClipboard()
 end
 
 function obj:formatSelection()
-    -- Send copy command (Command+C)
+    -- Save original clipboard
+    local originalClipboard = hs.pasteboard.getContents()
+    
+    -- Clear the clipboard first to ensure we can detect if our copy succeeded
+    hs.pasteboard.clearContents()
+    
+    -- Send copy command (Command+C) to get selected text
     hs.eventtap.keyStroke({"cmd"}, "c")
     
-    -- Wait for clipboard to update
-    hs.timer.usleep(500000)  -- 500ms delay
+    -- Use an approach with multiple attempts to get the clipboard content
+    local maxAttempts = 3
+    local gotContent = false
+    local postClipboard = nil
     
-    -- Get clipboard content
-    local content = hs.pasteboard.getContents()
-    if content then
-        print("formatSelection received content:", content)  -- Debug line
-        local formatted = self:processClipboard(content)
-        if formatted and formatted ~= content then
-            hs.eventtap.keyStrokes(formatted)
-            hs.alert.show("Formatted selection")
-            print("formatSelection produced result:", formatted)  -- Debug line
-            return
-        else
-            print("formatSelection: No changes made to content")  -- Debug line
+    for attempt = 1, maxAttempts do
+        -- Wait with increasing delay between attempts
+        hs.timer.usleep(250000 * attempt)  -- 250ms, 500ms, 750ms
+        
+        postClipboard = hs.pasteboard.getContents()
+        if postClipboard and postClipboard ~= "" then
+            gotContent = true
+            print("formatSelection: got content on attempt", attempt)
+            break
         end
-    else
-        print("formatSelection: Clipboard content is empty or not retrieved")  -- Debug line
+        
+        print("formatSelection: no content on attempt", attempt)
+        -- Try copying again if still no content
+        if attempt < maxAttempts then
+            hs.eventtap.keyStroke({"cmd"}, "c")
+        end
     end
     
-    hs.alert.show("No formattable content found")
+    if gotContent then
+        print("formatSelection received content:", postClipboard)
+        local formatted = self:processClipboard(postClipboard)
+        
+        if formatted and formatted ~= postClipboard then
+            -- Use paste mechanism for faster replacement
+            hs.pasteboard.setContents(formatted)
+            
+            -- Paste the formatted content
+            hs.eventtap.keyStroke({"cmd"}, "v")
+            hs.alert.show("Formatted selection")
+            print("formatSelection produced result:", formatted)
+        else
+            -- If nothing changed, restore original clipboard
+            if originalClipboard then
+                hs.pasteboard.setContents(originalClipboard)
+            end
+            print("formatSelection: No changes made to content")
+            hs.alert.show("No formatting applied")
+        end
+    else
+        -- Restore original clipboard
+        if originalClipboard then
+            hs.pasteboard.setContents(originalClipboard)
+        end
+        print("formatSelection: Failed to retrieve selected text")
+        hs.alert.show("Could not get selected text")
+    end
 end
 
 function obj:formatClipboardDirect()
@@ -984,7 +988,8 @@ function obj:formatClipboardDirect()
     if content then
         local formatted = self:processClipboard(content)
         if formatted and formatted ~= content then
-            hs.eventtap.keyStrokes(formatted)
+            -- Use clipboard for faster operation instead of keystrokes
+            hs.pasteboard.setContents(formatted)
             hs.alert.show("Formatted clipboard")
             print(string.format("Clipboard Formatter: Formatted clipboard - [%s]", formatted))
             return
@@ -1188,6 +1193,12 @@ function obj:splitWords(str)
         table.insert(words, current)
     end
     return words
+end
+
+function obj:stripDateTimeStamps(logContent)
+    -- Remove datetime stamps from log content
+    local strippedContent = logContent:gsub("%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d: ", "")
+    return strippedContent
 end
 
 return obj
