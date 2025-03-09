@@ -107,7 +107,7 @@ Install:andUse("HeadphoneAutoPause",
 -- -----------------------------------------------------------------------
 
 -- Optionally enable debug logging
-spoon.jjkHotkeys:toggleDebug(true)  -- Enable debug to see events in the console
+spoon.jjkHotkeys:toggleDebug(false)  -- Enable debug to see events in the console
 
 -- Safely wrap clipboard functions with error handling
 local function safeFormatSelection()
