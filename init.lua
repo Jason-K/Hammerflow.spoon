@@ -109,45 +109,16 @@ Install:andUse("HeadphoneAutoPause",
 -- Optionally enable debug logging
 spoon.jjkHotkeys:toggleDebug(false)  -- Enable debug to see events in the console
 
--- Safely wrap clipboard functions with error handling
-local function safeFormatSelection()
-    local success, result = pcall(function()
-        return spoon.ClipboardFormatter:formatSelection()
-    end)
-    
-    if not success then
-        print("Error in formatSelection:", result)
-        hs.alert.show("Error formatting selection")
-        return false
-    end
-    
-    return result
-end
-
-local function safeFormatClipboard()
-    local success, result = pcall(function()
-        return spoon.ClipboardFormatter:formatClipboard()
-    end)
-    
-    if not success then
-        print("Error in formatClipboard:", result)
-        hs.alert.show("Error formatting clipboard")
-        return false
-    end
-    
-    return result
-end
-
 spoon.jjkHotkeys:bindHotkeys({
   modTaps = {
     ["rcmd"] = {
       double = function() 
           print("Double-tap rcmd detected - calling ClipboardFormatter:formatSelection()")
-          safeFormatSelection()
+          spoon.ClipboardFormatter:formatSelection()
       end,
       hold = function() 
           print("Hold rcmd detected - calling ClipboardFormatter:formatClipboard()")
-          safeFormatClipboard()
+          spoon.ClipboardFormatter:formatClipboard()
       end,
     },
   },

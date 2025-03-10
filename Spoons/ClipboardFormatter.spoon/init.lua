@@ -831,6 +831,12 @@ function obj:processClipboard(content)
     local hasLowerC = content:find('[cC]')
     local hasPD = content:lower():find('pd')
     
+    -- Check for hammerspoon logs (do this early to avoid other patterns)
+    if content:find('%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:') then
+        local strippedLogs = self:stripDateTimeStamps(content)
+        if strippedLogs then return strippedLogs end
+    end
+    
     -- Most common case - check for arithmetic expressions first
     if hasDollar or content:match("[%+%-%*/]") then
         if self:isArithmeticExpression(content) then
@@ -1332,9 +1338,49 @@ function obj:splitWords(str)
 end
 
 function obj:stripDateTimeStamps(logContent)
-    -- Remove datetime stamps from log content
-    local strippedContent = logContent:gsub("%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:%s*", "")
-    return strippedContent
+    -- Check if we actually have log content first
+    if not self:isHammerspoonLog(logContent) then
+        return nil
+    end
+    
+    -- Process line by line
+    local lines = self:splitLines(logContent)
+    local strippedLines = {}
+    
+    for _, line in ipairs(lines) do
+        -- Replace timestamp pattern at the beginning of each line with empty string
+        local strippedLine = line:gsub("^%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:%s*", "")
+        table.insert(strippedLines, strippedLine)
+    end
+    
+    -- Join lines back together
+    return table.concat(strippedLines, "\n")
+end
+
+function obj:isHammerspoonLog(content)
+    -- Check if the content looks like Hammerspoon logs (multiple lines with timestamp pattern)
+    local lines = self:splitLines(content)
+    if #lines < 2 then return false end
+    
+    -- Count how many lines match the log pattern
+    local logLineCount = 0
+    for _, line in ipairs(lines) do
+        -- Match pattern like "2025-03-09 08:53:00:" at the start of line
+        if line:match("^%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:") then
+            logLineCount = logLineCount + 1
+        end
+    end
+    
+    -- If most lines (>50%) have this pattern, it's likely a log
+    return logLineCount >= (#lines / 2)
+end
+
+function obj:splitLines(str)
+    local lines = {}
+    for line in str:gmatch("([^\n]*)\n?") do
+        table.insert(lines, line)
+    end
+    return lines
 end
 
 return obj
