@@ -26,16 +26,22 @@ obj.license  = "MIT - https://opensource.org/licenses/MIT"
 -- USER-CONFIGURABLE SETTINGS (timeouts, etc.)
 ----------------------------------------------------------------------
 -- Timeout for multi-taps (pressing same key multiple times within this many seconds).
-obj.multiTapTimeout = 0.4
+obj.multiTapTimeout = 0.25
 
 -- Timeout for distinguishing tap vs hold (press and release quickly vs. holding down)
 obj.tapHoldTimeout = 0.35
+obj.holdDelay = 0.35
 
 -- Timeout for waiting between keys in a short combo sequence (e.g., a+b).
 obj.combinationTimeout = 0.6
 
 -- Timeout for sequence/layer resets—if too much time passes, we reset the sequence.
 obj.sequenceTimeout = 1.0
+
+-- Delay before firing a single-tap action (to allow for double-tap detection)
+obj.doubleTapDelay = 0.2
+
+
 
 -- Whether or not to log debug output.
 obj.debug = false

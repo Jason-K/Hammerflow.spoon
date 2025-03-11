@@ -176,7 +176,7 @@ end
 --- ```
 function obj:bindHotkeys(mapping)
   hs.inspect(mapping)
-  print("Bind Hotkeys for Miro's Windows Manager")
+  -- print("Bind Hotkeys for Miro's Windows Manager")
 
   hs.hotkey.bind(mapping.down[1], mapping.down[2], function ()
     self._pressed.down = true
