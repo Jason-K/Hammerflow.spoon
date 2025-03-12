@@ -64,13 +64,7 @@ local Install    = spoon.SpoonInstall
 -- MODULE - JJK Clipboard Manager
 -- -----------------------------------------------------------------------
 
-if spoon.ClipboardFormatter then
-  -- Bind hotkeys to the clipboard formatter
-  spoon.ClipboardFormatter:bindHotkeys({
-    format = { super, "v" },         -- Super+V to format clipboard contents
-    formatSelection = { hyper, "v" } -- Hyper+V to format selected text
-  })
-end
+-- ClipboardFormatter is now configured through jjkHotkeys below
 
 -- -----------------------------------------------------------------------
 -- MODULE - jjkUserScripts
@@ -78,19 +72,13 @@ end
 
 if spoon.jjkUserScripts then
   spoon.jjkUserScripts:start()
-
-  -- Add direct hotkey binding for search function (as backup to jjkHotkeys approach)
-  hs.hotkey.bind(hyper, "s", function()
-    -- Explicitly debug that standard hotkey was triggered
-    hs.alert.show("Hyper+S triggered via standard hotkey")
-    spoon.jjkUserScripts:searchOrOpen()
-  end)
+  -- Direct hotkey binding removed in favor of jjkHotkeys approach
 else
   hs.alert.show("jjkUserScripts Spoon not loaded")
 end
 
 -- -----------------------------------------------------------------------
--- MODULE - jjkHotkeys IMPLEMENTATION (ALTERNATIVE APPROACH)
+-- MODULE - jjkHotkeys IMPLEMENTATION (CENTRAL HOTKEY MANAGER)
 -- -----------------------------------------------------------------------
 
 if spoon.jjkHotkeys then
@@ -110,7 +98,7 @@ if spoon.jjkHotkeys then
         end,
       },
     },
-    -- Add combos for "s" key with hyper modifiers
+    -- Consolidated key combos
     combos = {
       ["s"] = {
         ["lcmd+lalt+lctrl"] = function()
@@ -119,9 +107,20 @@ if spoon.jjkHotkeys then
           end
         end,
       },
+      ["v"] = {
+        ["lcmd+lalt+lctrl"] = function()
+          if spoon.ClipboardFormatter then
+            spoon.ClipboardFormatter:formatSelection()
+          end
+        end,
+        ["lcmd+lalt+lctrl+lshift"] = function()
+          if spoon.ClipboardFormatter then
+            spoon.ClipboardFormatter:formatClipboard()
+          end
+        end,
+      },
     }
-  }
-  )
+  })
 
   -- Start jjkHotkeys
   spoon.jjkHotkeys:start()
