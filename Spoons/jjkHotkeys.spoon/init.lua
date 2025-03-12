@@ -187,37 +187,38 @@ local function handleTap(keyName, nTaps, isHold)
 end
 
 local function handleCombo(keyName)
-  local comboDefs = obj.hotkeyDefinitions.combos[keyName]
-  if not comboDefs then return false end
-
-  -- Collect active left/right modifiers into a string (e.g. "lcmd+rctrl")
-  local activeMods = {}
-  for mod, isActive in pairs(leftRightModifiers) do
-    if isActive then table.insert(activeMods, mod) end
-  end
-  local comboKey = table.concat(activeMods, "+")
-
-  if keyTapCount[keyName] == 1 then
-    -- Wait multiTapTimeout before firing a single press
-    hs.timer.doAfter(obj.multiTapTimeout, function()
-      if keyTapCount[keyName] == 1 then
-        local singleAction = comboDefs[comboKey]
-        if type(singleAction) == "function" then
-          singleAction()
+    -- Create a string representing currently active modifiers
+    local activeModsStr = ""
+    for mod, isActive in pairs(leftRightModifiers) do
+        if isActive then
+            activeModsStr = activeModsStr .. mod .. "+"
         end
-        keyTapCount[keyName] = 0
-      end
-    end)
-  elseif keyTapCount[keyName] == 2 then
-    -- Double pressed within multiTapTimeout
-    local doubleAction = comboDefs[comboKey .. "2"]
-    if type(doubleAction) == "function" then
-      doubleAction()
     end
-    keyTapCount[keyName] = 0
-  end
-
-  return true
+    
+    -- If no combos defined for this key, bail early
+    if not obj.hotkeyDefinitions.combos[keyName] then
+        return false
+    end
+    
+    -- Check for exact combo matches first (e.g., "lcmd+lalt+lctrl")
+    for comboSpec, action in pairs(obj.hotkeyDefinitions.combos[keyName]) do
+        -- Skip patterns with tap number suffixes - they're handled on key down
+        local hasTapCount = false
+        if type(comboSpec) == "string" then
+            hasTapCount = string.match(comboSpec, "%d+$") ~= nil
+        end
+        
+        if not hasTapCount then
+            -- Safe string comparison - prevent nil errors
+            local comboWithPlus = comboSpec .. "+"
+            if activeModsStr == comboWithPlus then
+                action()
+                return true
+            end
+        end
+    end
+    
+    return false
 end
 
 local function handleSequence(seq)
@@ -689,6 +690,35 @@ function obj:toggleDebug(enabled)
     self.debug = enabled and true or false
     log.setLogLevel(self.debug and "debug" or "warning")
     return self
+end
+
+-- Add these methods near the top of the file, after the object declaration
+function obj:setSafeMode(enabled)
+  self.safeMode = enabled
+  return self
+end
+
+-- Modify the handleKeyEvent function (around line 464) to include nil checks
+-- Replace the relevant section with:
+function obj:handleKeyEvent(event)
+  -- ...existing code...
+  
+  -- Add safe string pattern matching
+  local function safeMatch(str, pattern)
+    if not str or type(str) ~= "string" then
+      self.log.d("Warning: Attempted to match on nil or non-string value")
+      return false
+    end
+    return string.match(str, pattern)
+  end
+  
+  -- When processing key events, replace any direct calls to match() with safeMatch()
+  -- For example, if the code has something like:
+  -- if someString:match(pattern) then
+  -- Replace with:
+  -- if safeMatch(someString, pattern) then
+  
+  -- ...existing code...
 end
 
 return obj

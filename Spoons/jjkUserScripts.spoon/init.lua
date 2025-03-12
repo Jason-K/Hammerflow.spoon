@@ -165,6 +165,9 @@ end
 --- Method
 --- Gets the currently selected text and decides whether to open it as URL, file path, or search term
 function obj:searchOrOpen()
+    -- Debug message to confirm function is called
+    hs.alert.show("Search function called")
+    
     -- Get selected text (no permission check needed)
     local query = self:getSelectedText()
     
