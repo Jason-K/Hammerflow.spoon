@@ -30,7 +30,6 @@ end
 safeLoadSpoon("SpoonInstall")
 safeLoadSpoon("jjkHotkeys")
 safeLoadSpoon("ClipboardFormatter")
-safeLoadSpoon("jjkUserScripts")
 
 -- -----------------------------------------------------------------------
 -- MODULE - AUTO RELOAD ON SAVE
@@ -61,23 +60,6 @@ local meh        = { "ralt", "rctrl", "rshift" }
 local Install    = spoon.SpoonInstall
 
 -- -----------------------------------------------------------------------
--- MODULE - JJK Clipboard Manager
--- -----------------------------------------------------------------------
-
--- ClipboardFormatter is now configured through jjkHotkeys below
-
--- -----------------------------------------------------------------------
--- MODULE - jjkUserScripts
--- -----------------------------------------------------------------------
-
-if spoon.jjkUserScripts then
-  spoon.jjkUserScripts:start()
-  -- Direct hotkey binding removed in favor of jjkHotkeys approach
-else
-  hs.alert.show("jjkUserScripts Spoon not loaded")
-end
-
--- -----------------------------------------------------------------------
 -- MODULE - jjkHotkeys IMPLEMENTATION (CENTRAL HOTKEY MANAGER)
 -- -----------------------------------------------------------------------
 
@@ -100,13 +82,6 @@ if spoon.jjkHotkeys then
     },
     -- Consolidated key combos
     combos = {
-      ["s"] = {
-        ["lcmd+lalt+lctrl"] = function()
-          if spoon.jjkUserScripts then
-            spoon.jjkUserScripts:searchOrOpen()
-          end
-        end,
-      },
       ["v"] = {
         ["lcmd+lalt+lctrl"] = function()
           if spoon.ClipboardFormatter then
@@ -128,6 +103,27 @@ else
   hs.alert.show("jjkHotkeys Spoon not loaded")
 end
 
--- -----------------------------------------------------------------------
+
+-- Bind Ctrl + Alt + Cmd + ' to wrap selected text in quotes
+hs.hotkey.bind({"ctrl", "alt", "cmd"}, "'", function()
+  -- Step 1: Copy whatever is currently selected
+  hs.eventtap.keyStroke({"cmd"}, "c")
+
+  -- Step 2: Small delay to allow copy operation to complete
+  hs.timer.doAfter(0.2, function()
+      -- Step 3: Get the copied text
+      local selectedText = hs.pasteboard.getContents()
+      if selectedText then
+          -- Step 4: Add quotes
+          local quotedText = '"' .. selectedText .. '"'
+          hs.pasteboard.setContents(quotedText)
+
+          -- Step 5: Paste new text
+          hs.eventtap.keyStroke({"cmd"}, "v")
+      end
+  end)
+end)
+
+----------------------------------------------------------------
 
 hs.alert.show("Hammerspoon configuration loaded")
