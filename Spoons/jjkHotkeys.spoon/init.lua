@@ -44,6 +44,9 @@ obj.doubleTapDelay = 0.2
 -- Whether or not to log debug output.
 obj.debug = false
 
+-- Safe mode - additional error checking
+obj.safeMode = true
+
 ----------------------------------------------------------------------
 -- INTERNAL STATE
 ----------------------------------------------------------------------
@@ -90,6 +93,19 @@ local function dbg(fmt, ...)
     end
 end
 
+-- Safe function calling with error handling
+local function safeCall(func, ...)
+    if not func then return nil end
+    if type(func) ~= "function" then return nil end
+    
+    local success, result = pcall(func, ...)
+    if not success then
+        log.e("Error calling function: " .. tostring(result))
+        return nil
+    end
+    return result
+end
+
 -- Retrieve a string name from a numeric keyCode
 local function keyNameFromCode(keyCode)
     local nm = hs.keycodes.map[keyCode]
@@ -98,15 +114,26 @@ end
 
 -- Get the specific left/right modifier status
 local function getLeftRightModifiers(rawFlags)
+    if not rawFlags then 
+        log.w("getLeftRightModifiers called with nil rawFlags")
+        return {} 
+    end
+    
     local mods = {}
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceLeftShift > 0 then mods.lshift = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceRightShift > 0 then mods.rshift = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceLeftControl > 0 then mods.lctrl = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceRightControl > 0 then mods.rctrl = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceLeftCommand > 0 then mods.lcmd = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceRightCommand > 0 then mods.rcmd = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceLeftAlternate > 0 then mods.lalt = true end
-    if rawFlags & hs.eventtap.event.rawFlagMasks.deviceRightAlternate > 0 then mods.ralt = true end
+    -- Safely access flag bit masks
+    local masks = hs.eventtap.event.rawFlagMasks
+    if masks then
+        if masks.deviceLeftShift and rawFlags & masks.deviceLeftShift > 0 then mods.lshift = true end
+        if masks.deviceRightShift and rawFlags & masks.deviceRightShift > 0 then mods.rshift = true end
+        if masks.deviceLeftControl and rawFlags & masks.deviceLeftControl > 0 then mods.lctrl = true end
+        if masks.deviceRightControl and rawFlags & masks.deviceRightControl > 0 then mods.rctrl = true end
+        if masks.deviceLeftCommand and rawFlags & masks.deviceLeftCommand > 0 then mods.lcmd = true end
+        if masks.deviceRightCommand and rawFlags & masks.deviceRightCommand > 0 then mods.rcmd = true end
+        if masks.deviceLeftAlternate and rawFlags & masks.deviceLeftAlternate > 0 then mods.lalt = true end
+        if masks.deviceRightAlternate and rawFlags & masks.deviceRightAlternate > 0 then mods.ralt = true end
+    else
+        log.w("hs.eventtap.event.rawFlagMasks not available")
+    end
     return mods
 end
 
@@ -120,37 +147,10 @@ end
 
 -- Cancel pending single tap for a modifier
 local function cancelPendingSingleTap(mod)
+    if not mod then return end
+    
     if pendingSingleTapTimers[mod] then
         pendingSingleTapTimers[mod]:stop()
-        pendingSingleTapTimers[mod] = nil
-    end
-    pendingSingleTaps[mod] = nil
-end
-
--- Cancel hold timer for a modifier and mark it as used with a regular key
-local function cancelHoldTimer(mod)
-    if holdTimer[mod] then
-        holdTimer[mod]:stop()
-        holdTimer[mod] = nil
-    end
-    holdFiredFor[mod] = nil
-    regularKeyWasPressed[mod] = true
-end
-
-----------------------------------------------------------------------
--- LOOKUP AND INVOKE FUNCTIONS
--- These read from obj.hotkeyDefinitions to find an appropriate action
--- for taps, combos, sequences, etc.
-----------------------------------------------------------------------
-
-local function handleTap(keyName, nTaps, isHold)
-    local tapDefs = obj.hotkeyDefinitions.taps[keyName]
-    if not tapDefs then return end
-
-    local definition
-    if nTaps == 1 and not isHold then
-        -- Add a delay before executing the single-tap action to check for double-tap
-        hs.timer.doAfter(obj.multiTapTimeout, function()
             if keyTapCount[keyName] == 1 then
                 definition = tapDefs.single
                 if type(definition) == "function" then

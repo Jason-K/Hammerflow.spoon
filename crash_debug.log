@@ -1,0 +1,7 @@
+2025-03-20 12:44:55: Starting Hammerspoon in safe mode
+2025-03-20 12:44:55: PRINT: -- Loading extension: pathwatcher	
+2025-03-20 12:44:55: PRINT: -- Loading extension: alert	
+2025-03-20 12:44:55: Safe mode initialized successfully
+2025-03-20 12:44:55: PRINT: -- Done.	
+2025-03-20 12:44:57: Config file changed: /Users/jason/.hammerspoon/init.lua, reloading...
+2025-03-20 12:44:57: Hammerspoon shutting down normally

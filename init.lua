@@ -1,35 +1,83 @@
 -- -----------------------------------------------------------------------
+-- DEBUGGING HELPERS
+-- -----------------------------------------------------------------------
+
+-- Create a log file for debugging
+local debugLogFile = io.open(os.getenv("HOME") .. "/.hammerspoon/debug_log.txt", "w")
+local function debugLog(message)
+  if debugLogFile then
+    debugLogFile:write(os.date("%Y-%m-%d %H:%M:%S") .. ": " .. tostring(message) .. "\n")
+    debugLogFile:flush()
+  end
+end
+
+debugLog("Starting Hammerspoon initialization")
+
+-- Error handling wrapper
+local function safeCall(description, func)
+  debugLog("Attempting: " .. description)
+  local success, result = pcall(func)
+  if not success then
+    debugLog("ERROR in " .. description .. ": " .. tostring(result))
+    hs.alert.show("Error: " .. description)
+  else
+    debugLog("Success: " .. description)
+  end
+  return success, result
+end
+
+-- -----------------------------------------------------------------------
 -- DEPENDENCIES
 -- -----------------------------------------------------------------------
 
-require('hs.ipc')
+safeCall("Loading hs.ipc", function() require('hs.ipc') end)
 
 -- -----------------------------------------------------------------------
 -- SETTINGS
 -- -----------------------------------------------------------------------
 
-hs.console.clearConsole()
-hs.console.darkMode(true)
-hs.window.animationDuration = 0.0
+safeCall("Configuring console", function()
+  hs.console.clearConsole()
+  hs.console.darkMode(true)
+  hs.window.animationDuration = 0.0
+end)
 
 -- -----------------------------------------------------------------------
 -- LOAD SPOON LIBRARIES
 -- -----------------------------------------------------------------------
 
+-- Initialize spoon table if it doesn't exist
+if spoon == nil then
+  debugLog("Initializing spoon table")
+  spoon = {}
+end
+
 -- Safely load Spoons with error handling
 local function safeLoadSpoon(spoonName)
+  debugLog("Loading Spoon: " .. spoonName)
   local status, spoonOrError = pcall(function() return hs.loadSpoon(spoonName) end)
   if not status then
+    local errorMsg = "Error loading " .. spoonName .. ": " .. tostring(spoonOrError)
+    debugLog(errorMsg)
     hs.alert.show("Error loading " .. spoonName .. " Spoon")
-    print("Error loading " .. spoonName .. ": " .. tostring(spoonOrError))
+    print(errorMsg)
     return nil
   end
+  debugLog("Successfully loaded Spoon: " .. spoonName)
   return spoonOrError
 end
 
-safeLoadSpoon("SpoonInstall")
-safeLoadSpoon("jjkHotkeys")
-safeLoadSpoon("ClipboardFormatter")
+safeCall("Loading spoons", function()
+  -- Assign each spoon properly
+  local spoonInst = safeLoadSpoon("SpoonInstall")
+  if spoonInst then spoon.SpoonInstall = spoonInst end
+  
+  local jjkHotkeys = safeLoadSpoon("jjkHotkeys")
+  if jjkHotkeys then spoon.jjkHotkeys = jjkHotkeys end
+  
+  local clipFormatter = safeLoadSpoon("ClipboardFormatter")
+  if clipFormatter then spoon.ClipboardFormatter = clipFormatter end
+end)
 
 -- -----------------------------------------------------------------------
 -- MODULE - AUTO RELOAD ON SAVE
@@ -38,6 +86,7 @@ safeLoadSpoon("ClipboardFormatter")
 local function reloadConfig(files)
   for _, file in pairs(files) do
     if file:sub(-4) == ".lua" then
+      debugLog("Config file changed: " .. file .. ", reloading...")
       hs.reload()
       hs.alert.show('Config Reloaded')
       return
@@ -45,8 +94,10 @@ local function reloadConfig(files)
   end
 end
 
-local reloadConfigWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig)
-reloadConfigWatcher:start()
+safeCall("Setting up config reload watcher", function()
+  local reloadConfigWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig)
+  reloadConfigWatcher:start()
+end)
 
 -- -----------------------------------------------------------------------
 -- CROSS-LIBRARY VARIABLES
@@ -57,73 +108,99 @@ local super      = { "lcmd", "lalt", "lctrl", "lshift" }
 local superduper = { "lcmd", "lalt", "lctrl", "lshift", "fn" }
 local ctrl_cmd   = { "lcmd", "lctrl" }
 local meh        = { "ralt", "rctrl", "rshift" }
-local Install    = spoon.SpoonInstall
+
+safeCall("Setting up SpoonInstall variable", function()
+  if spoon.SpoonInstall then
+    Install = spoon.SpoonInstall
+  else
+    debugLog("SpoonInstall not available")
+  end
+end)
 
 -- -----------------------------------------------------------------------
 -- MODULE - jjkHotkeys IMPLEMENTATION (CENTRAL HOTKEY MANAGER)
 -- -----------------------------------------------------------------------
 
-if spoon.jjkHotkeys then
-  spoon.jjkHotkeys:bindHotkeys({
-    -- Right command functionality
-    modTaps = {
-      ["rcmd"] = {
-        double = function()
-          if spoon.ClipboardFormatter then
-            spoon.ClipboardFormatter:formatSelection()
-          end
-        end,
-        hold = function()
-          if spoon.ClipboardFormatter then
-            spoon.ClipboardFormatter:formatClipboard()
-          end
-        end,
+safeCall("Setting up jjkHotkeys", function()
+  if spoon.jjkHotkeys then
+    debugLog("Binding hotkeys for jjkHotkeys")
+    
+    spoon.jjkHotkeys:bindHotkeys({
+      -- Right command functionality
+      modTaps = {
+        ["rcmd"] = {
+          double = function()
+            if spoon.ClipboardFormatter then
+              spoon.ClipboardFormatter:formatSelection()
+            end
+          end,
+          hold = function()
+            if spoon.ClipboardFormatter then
+              spoon.ClipboardFormatter:formatClipboard()
+            end
+          end,
+        },
       },
-    },
-    -- Consolidated key combos
-    combos = {
-      ["v"] = {
-        ["lcmd+lalt+lctrl"] = function()
-          if spoon.ClipboardFormatter then
-            spoon.ClipboardFormatter:formatSelection()
-          end
-        end,
-        ["lcmd+lalt+lctrl+lshift"] = function()
-          if spoon.ClipboardFormatter then
-            spoon.ClipboardFormatter:formatClipboard()
-          end
-        end,
-      },
-    }
-  })
+      -- Consolidated key combos
+      combos = {
+        ["v"] = {
+          ["lcmd+lalt+lctrl"] = function()
+            if spoon.ClipboardFormatter then
+              spoon.ClipboardFormatter:formatSelection()
+            end
+          end,
+          ["lcmd+lalt+lctrl+lshift"] = function()
+            if spoon.ClipboardFormatter then
+              spoon.ClipboardFormatter:formatClipboard()
+            end
+          end,
+        },
+      }
+    })
 
-  -- Start jjkHotkeys
-  spoon.jjkHotkeys:start()
-else
-  hs.alert.show("jjkHotkeys Spoon not loaded")
-end
+    -- Start jjkHotkeys
+    debugLog("Starting jjkHotkeys")
+    spoon.jjkHotkeys:start()
+  else
+    debugLog("jjkHotkeys Spoon not loaded")
+    hs.alert.show("jjkHotkeys Spoon not loaded")
+  end
+end)
 
+-- -----------------------------------------------------------------------
+-- QUOTE WRAPPER FUNCTIONALITY
+-- -----------------------------------------------------------------------
 
--- Bind Ctrl + Alt + Cmd + ' to wrap selected text in quotes
-hs.hotkey.bind({"ctrl", "alt", "cmd"}, "'", function()
-  -- Step 1: Copy whatever is currently selected
-  hs.eventtap.keyStroke({"cmd"}, "c")
+safeCall("Setting up quote wrapper hotkey", function()
+  hs.hotkey.bind({"ctrl", "alt", "cmd"}, "'", function()
+    -- Step 1: Copy whatever is currently selected
+    hs.eventtap.keyStroke({"cmd"}, "c")
 
-  -- Step 2: Small delay to allow copy operation to complete
-  hs.timer.doAfter(0.2, function()
-      -- Step 3: Get the copied text
-      local selectedText = hs.pasteboard.getContents()
-      if selectedText then
-          -- Step 4: Add quotes
-          local quotedText = '"' .. selectedText .. '"'
-          hs.pasteboard.setContents(quotedText)
+    -- Step 2: Small delay to allow copy operation to complete
+    hs.timer.doAfter(0.2, function()
+        -- Step 3: Get the copied text
+        local selectedText = hs.pasteboard.getContents()
+        if selectedText then
+            -- Step 4: Add quotes
+            local quotedText = '"' .. selectedText .. '"'
+            hs.pasteboard.setContents(quotedText)
 
-          -- Step 5: Paste new text
-          hs.eventtap.keyStroke({"cmd"}, "v")
-      end
+            -- Step 5: Paste new text
+            hs.eventtap.keyStroke({"cmd"}, "v")
+        end
+    end)
   end)
 end)
 
-----------------------------------------------------------------
+-- -----------------------------------------------------------------------
+-- FINALIZATION
+-- -----------------------------------------------------------------------
 
-hs.alert.show("Hammerspoon configuration loaded")
+safeCall("Finalizing initialization", function()
+  debugLog("Hammerspoon configuration loaded successfully")
+  hs.alert.show("Hammerspoon configuration loaded")
+  if debugLogFile then
+    debugLogFile:close()
+    debugLogFile = nil
+  end
+end)

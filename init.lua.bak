@@ -1,0 +1,57 @@
+-- Safe mode initialization for testing
+-- This file can be used to test Hammerspoon without potentially problematic modules
+
+-- Set up console and logging
+hs.console.clearConsole()
+hs.console.darkMode(true)
+hs.window.animationDuration = 0.0
+
+-- Write all messages to a log file
+local logFile = io.open(os.getenv("HOME") .. "/.hammerspoon/crash_debug.log", "w")
+local function log(message)
+  if logFile then
+    logFile:write(os.date("%Y-%m-%d %H:%M:%S") .. ": " .. tostring(message) .. "\n")
+    logFile:flush()
+  end
+end
+
+log("Starting Hammerspoon in safe mode")
+
+-- Set up error handling
+local originalPrint = print
+_G.print = function(...)
+  local args = {...}
+  local printResult = ""
+  for i, v in ipairs(args) do
+    printResult = printResult .. tostring(v) .. "\t"
+  end
+  log("PRINT: " .. printResult)
+  return originalPrint(...)
+end
+
+-- Basic auto-reload
+local function reloadConfig(files)
+  for _, file in pairs(files) do
+    if file:sub(-4) == ".lua" then
+      log("Config file changed: " .. file .. ", reloading...")
+      hs.reload()
+      hs.alert.show('Config Reloaded')
+      return
+    end
+  end
+end
+
+local reloadConfigWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig)
+reloadConfigWatcher:start()
+
+-- Show an alert to confirm safe mode is running
+hs.alert.show("Hammerspoon Safe Mode Activated")
+log("Safe mode initialized successfully")
+
+-- Close log file when app terminates
+hs.shutdownCallback = function()
+  log("Hammerspoon shutting down normally")
+  if logFile then
+    logFile:close()
+  end
+end
