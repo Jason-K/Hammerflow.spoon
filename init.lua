@@ -69,8 +69,8 @@ end
 
 safeCall("Loading spoons", function()
   -- Assign each spoon properly
-  local spoonInst = safeLoadSpoon("SpoonInstall")
-  if spoonInst then spoon.SpoonInstall = spoonInst end
+  -- local spoonInst = safeLoadSpoon("SpoonInstall")
+  -- if spoonInst then spoon.SpoonInstall = spoonInst end
   
   local jjkHotkeys = safeLoadSpoon("jjkHotkeys")
   if jjkHotkeys then spoon.jjkHotkeys = jjkHotkeys end
@@ -109,13 +109,13 @@ local superduper = { "lcmd", "lalt", "lctrl", "lshift", "fn" }
 local ctrl_cmd   = { "lcmd", "lctrl" }
 local meh        = { "ralt", "rctrl", "rshift" }
 
-safeCall("Setting up SpoonInstall variable", function()
-  if spoon.SpoonInstall then
-    Install = spoon.SpoonInstall
-  else
-    debugLog("SpoonInstall not available")
-  end
-end)
+-- safeCall("Setting up SpoonInstall variable", function()
+--  if spoon.SpoonInstall then
+--    Install = spoon.SpoonInstall
+--  else
+--    debugLog("SpoonInstall not available")
+--  end
+-- end)
 
 -- -----------------------------------------------------------------------
 -- MODULE - jjkHotkeys IMPLEMENTATION (CENTRAL HOTKEY MANAGER)

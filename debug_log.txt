@@ -1,26 +1,22 @@
-2025-03-20 12:44:57: Starting Hammerspoon initialization
-2025-03-20 12:44:57: Attempting: Loading hs.ipc
-2025-03-20 12:44:57: Success: Loading hs.ipc
-2025-03-20 12:44:57: Attempting: Configuring console
-2025-03-20 12:44:57: Success: Configuring console
-2025-03-20 12:44:57: Initializing spoon table
-2025-03-20 12:44:57: Attempting: Loading spoons
-2025-03-20 12:44:57: Loading Spoon: SpoonInstall
-2025-03-20 12:44:57: Successfully loaded Spoon: SpoonInstall
-2025-03-20 12:44:57: Loading Spoon: jjkHotkeys
-2025-03-20 12:44:57: Successfully loaded Spoon: jjkHotkeys
-2025-03-20 12:44:57: Loading Spoon: ClipboardFormatter
-2025-03-20 12:44:57: Successfully loaded Spoon: ClipboardFormatter
-2025-03-20 12:44:57: Success: Loading spoons
-2025-03-20 12:44:57: Attempting: Setting up config reload watcher
-2025-03-20 12:44:57: Success: Setting up config reload watcher
-2025-03-20 12:44:57: Attempting: Setting up SpoonInstall variable
-2025-03-20 12:44:57: Success: Setting up SpoonInstall variable
-2025-03-20 12:44:57: Attempting: Setting up jjkHotkeys
-2025-03-20 12:44:57: Binding hotkeys for jjkHotkeys
-2025-03-20 12:44:57: Starting jjkHotkeys
-2025-03-20 12:44:57: Success: Setting up jjkHotkeys
-2025-03-20 12:44:57: Attempting: Setting up quote wrapper hotkey
-2025-03-20 12:44:57: Success: Setting up quote wrapper hotkey
-2025-03-20 12:44:57: Attempting: Finalizing initialization
-2025-03-20 12:44:57: Hammerspoon configuration loaded successfully
+2025-03-25 15:08:59: Starting Hammerspoon initialization
+2025-03-25 15:08:59: Attempting: Loading hs.ipc
+2025-03-25 15:08:59: Success: Loading hs.ipc
+2025-03-25 15:08:59: Attempting: Configuring console
+2025-03-25 15:08:59: Success: Configuring console
+2025-03-25 15:08:59: Initializing spoon table
+2025-03-25 15:08:59: Attempting: Loading spoons
+2025-03-25 15:08:59: Loading Spoon: jjkHotkeys
+2025-03-25 15:08:59: Successfully loaded Spoon: jjkHotkeys
+2025-03-25 15:08:59: Loading Spoon: ClipboardFormatter
+2025-03-25 15:08:59: Successfully loaded Spoon: ClipboardFormatter
+2025-03-25 15:08:59: Success: Loading spoons
+2025-03-25 15:08:59: Attempting: Setting up config reload watcher
+2025-03-25 15:08:59: Success: Setting up config reload watcher
+2025-03-25 15:08:59: Attempting: Setting up jjkHotkeys
+2025-03-25 15:08:59: Binding hotkeys for jjkHotkeys
+2025-03-25 15:08:59: Starting jjkHotkeys
+2025-03-25 15:08:59: Success: Setting up jjkHotkeys
+2025-03-25 15:08:59: Attempting: Setting up quote wrapper hotkey
+2025-03-25 15:08:59: Success: Setting up quote wrapper hotkey
+2025-03-25 15:08:59: Attempting: Finalizing initialization
+2025-03-25 15:08:59: Hammerspoon configuration loaded successfully

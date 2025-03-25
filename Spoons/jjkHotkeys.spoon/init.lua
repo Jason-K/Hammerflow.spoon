@@ -151,6 +151,34 @@ local function cancelPendingSingleTap(mod)
     
     if pendingSingleTapTimers[mod] then
         pendingSingleTapTimers[mod]:stop()
+        pendingSingleTapTimers[mod] = nil
+    end
+    pendingSingleTaps[mod] = nil
+end
+
+-- Cancel hold timer for a modifier and mark it as used with a regular key
+local function cancelHoldTimer(mod)
+    if not mod then return end
+    
+    if holdTimer[mod] then
+        holdTimer[mod]:stop()
+        holdTimer[mod] = nil
+    end
+    holdFiredFor[mod] = nil
+    regularKeyWasPressed[mod] = true
+end
+
+-- Handle tap actions with proper type checking
+local function handleTap(keyName, nTaps, isHold)
+    if not keyName then return end
+    
+    local tapDefs = obj.hotkeyDefinitions.taps[keyName]
+    if not tapDefs then return end
+    
+    local definition
+    if nTaps == 1 and not isHold then
+        -- Add a delay before executing the single-tap action to check for double-tap
+        hs.timer.doAfter(obj.multiTapTimeout, function()
             if keyTapCount[keyName] == 1 then
                 definition = tapDefs.single
                 if type(definition) == "function" then
@@ -158,10 +186,6 @@ local function cancelPendingSingleTap(mod)
                 elseif type(definition) == "table" and definition.layer then
                     activeLayer = definition.layer
                     if definition.message then hs.alert.show(definition.message) end
-                elseif definition then
-                    dbg("Tap: found definition with unrecognized type: " .. type(definition))
-                else
-                    dbg("No matching tap definition for key=%s taps=%d hold=%s", keyName, nTaps, tostring(isHold))
                 end
             end
         end)
@@ -171,16 +195,14 @@ local function cancelPendingSingleTap(mod)
     elseif isHold then
         definition = tapDefs.hold
     end
-
-    if type(definition) == "function" then
-        definition()
-    elseif type(definition) == "table" and definition.layer then
-        activeLayer = definition.layer
-        if definition.message then hs.alert.show(definition.message) end
-    elseif definition then
-        dbg("Tap: found definition with unrecognized type: " .. type(definition))
-    else
-        dbg("No matching tap definition for key=%s taps=%d hold=%s", keyName, nTaps, tostring(isHold))
+    
+    if definition then
+        if type(definition) == "function" then
+            definition()
+        elseif type(definition) == "table" and definition.layer then
+            activeLayer = definition.layer
+            if definition.message then hs.alert.show(definition.message) end
+        end
     end
 end
 
