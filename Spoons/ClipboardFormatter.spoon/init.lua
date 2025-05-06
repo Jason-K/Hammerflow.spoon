@@ -515,142 +515,38 @@ function obj:processArithmeticExpression(content)
 end
 
 function obj:handleRatingString(content)
-    -- Add debug logging to see what we're processing
     print("handleRatingString input:", content)
     
     -- Trim content
     content = content:match('^%s*(.-)%s*$')
-    
-    -- Try to determine if the string matches the format: "numbers - numbers - [num]num - letters - num = num%"
-    -- This is a specific pattern match for your rating strings
-    local ratingPattern = "^(.-)%s*=%s*(%d+)%%$"
-    local mainPart, percentValue = content:match(ratingPattern)
-    
-    if mainPart and percentValue then
-        print("Rating pattern matched. Main part:", mainPart, "Percent:", percentValue)
-        
-        -- Extract all components by splitting on dashes
-        local fields = {}
-        for field in mainPart:gmatch('([^%-]+)') do
-            field = field:match('^%s*(.-)%s*$') -- Trim each field
-            if field ~= '' then table.insert(fields, field) end
-        end
-        
-        print("Fields extracted:", #fields)
-        for i, field in ipairs(fields) do
-            print("Field", i, ":", field)
-        end
-        
-        if #fields > 0 then
-            -- Always use 1.0 as the rating for this specific format
-            local compRating = 1.0
-            
-            -- Format the inner part exactly as it was (preserving all fields)
-            local innerOut = table.concat(fields, ' - ')
-            
-            -- Return the formatted string with proper rating and percentage
-            local result = string.format('%.1f (%s) = %s%%', compRating, innerOut, percentValue)
+
+    -- Pattern 1: Apportionment (e.g. 0.9 (.... = 16%) = 14.4% = 14%)
+    local prefix, remainder = content:match('^(%d+%.%d+)%s*%((.-)%)%s*(.*)$')
+    if prefix and remainder then
+        local compRating = prefix
+        -- Remove a trailing " = <number>%" from the inner part:
+        local inner = remainder:gsub("%s*=%s*([%d%.]+)%%$", " - %1")
+        inner = inner:gsub("%- %[", "-[")
+        local finalPercent = content:match('%)[%s%S]*=%s*([%d%.]+)%%%s*$')
+        if finalPercent then
+            local result = string.format('%s (%s) = %s%%', compRating, inner, finalPercent)
             print("handleRatingString result:", result)
             return result
         end
-    else
-        -- Fallback to existing parsing logic for other rating formats
-        
-        -- First try to extract a number prefix if it exists (like "4.3" in "4.3 (...)")
-        local prefix, remainder = content:match('^(%d+%.%d+)%s*%((.-)%)%s*(.*)$')
-        local inner, post
-        
-        if prefix and remainder then
-            -- We found a prefix and parenthesized content
-            inner = remainder
-            post = content:match('%)[%s%S]*=%s*([%d%.]+)%%%s*$')
-        else
-            -- No prefix found, try to extract just parenthesized content
-            inner, post = content:match('^%((.-)%)%s*(.*)$')
-            if not inner then
-                -- No parentheses either, assume whole string is inner content
-                inner = content
-                post = ''
-                
-                -- Try to extract trailing percentage if it exists
-                local innerPart, percentage = content:match('^(.-)[%s%S]*=%s*([%d%.]+)%%%s*$')
-                if innerPart and percentage then
-                    inner = innerPart
-                    post = '= ' .. percentage .. '%'
-                end
-            end
-        end
+    end
 
-        -- If we don't have an inner part yet, the format is not what we expect
-        if not inner then 
-            print("No inner part found, returning nil")
-            return nil 
-        end
-        
-        -- Extract the final percentage value
-        local finalPercent = post:match('=%s*([%d%.]+)%%')
-        if not finalPercent then
-            -- Try to find percentage within the inner content if not in post
-            local innerNoPercent, innerPercent = inner:match('(.-)=%s*([%d%.]+)%%')
-            if innerNoPercent and innerPercent then
-                inner = innerNoPercent
-                finalPercent = innerPercent
-            end
-        end
-
-        -- Split the inner part by dash
-        local fields = {}
-        for field in inner:gmatch('([^%-]+)') do
-            field = field:match('^%s*(.-)%s*$') -- Trim each field
-            if field ~= '' then table.insert(fields, field) end
-        end
-        
-        -- We need at least some fields to proceed
-        if #fields < 1 then 
-            print("No fields found, returning nil")
-            return nil 
-        end
-        
-        -- Determine the rating value (default to 1.0 if cannot be calculated)
-        local compRating = 1.0
-        
-        -- If we have a prefix, use it directly
-        if prefix then
-            compRating = tonumber(prefix)
-        else
-            -- Try to calculate from first two fields if they look like a fraction
-            local firstField = fields[1]
-            local secondField = fields[2]
-            
-            if firstField and secondField and tonumber(firstField) and tonumber(secondField) then
-                compRating = tonumber(firstField) / tonumber(secondField)
-            else
-                -- Check if first field contains a decimal number
-                local numPart = firstField and firstField:match('^(%d+%.%d+)')
-                if numPart and tonumber(numPart) then
-                    compRating = tonumber(numPart)
-                end
-            end
-        end
-        
-        -- Format rating to one decimal place
-        compRating = tonumber(string.format('%.1f', compRating))
-        
-        -- For your specific case format
-        local innerOut = table.concat(fields, ' - ')
-        
-        -- Build the final string with proper formatting
-        local result
-        if finalPercent then
-            result = string.format('%.1f (%s) = %s%%', compRating, innerOut, finalPercent)
-        else
-            result = string.format('%.1f (%s)', compRating, innerOut)
-        end
-        
-        print("handleRatingString result (fallback):", result)
+    -- Pattern 2: Plain rating (e.g. 16.01.04.00 - 11 - [1.4]15 - 360G - 17 = 16%)
+    local main, percent = content:match('^(.-)%s*=%s*([%d%.]+)%%$')
+    if main and percent then
+        -- Remove trailing/leading spaces and dashes
+        main = main:gsub('%s*%-?%s*$', '')
+        -- Remove trailing spaces before brackets
+        main = main:gsub('%- %[', '-[')
+        local result = string.format('1.0 (%s - %s) = %s%%', main, percent, percent)
+        print("handleRatingString result:", result)
         return result
     end
-    
+
     print("No patterns matched, returning nil")
     return nil
 end
@@ -879,7 +775,7 @@ end
 -- Known test case byte patterns
 local KnownPatterns = {
     ["$170.89/7"] = {36, 49, 55, 48, 46, 56, 57, 47, 55},  -- "$170.89/7"
-    ["5/6/23 to 6/14/23"] = {53, 47, 54, 47, 50, 51, 32, 116, 111, 32, 54, 47, 49, 52, 47, 50, 51},  -- "5/6/23 to 6/14/23"
+    ["5/6/23 to 6/14/23"] = {53, 47, 54, 47, 50, 51, 32, 116, 111, 32, 54, 47, 49, 54, 47, 50, 51},  -- "5/6/23 to 6/14/23"
     ["5/6/23 and 6/14/23"] = {53, 47, 54, 47, 50, 51, 32, 97, 110, 100, 32, 54, 47, 49, 52, 47, 50, 51}  -- "5/6/23 and 6/14/23"
 }
 

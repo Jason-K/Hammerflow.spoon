@@ -1,22 +1,27 @@
-2025-03-25 15:08:59: Starting Hammerspoon initialization
-2025-03-25 15:08:59: Attempting: Loading hs.ipc
-2025-03-25 15:08:59: Success: Loading hs.ipc
-2025-03-25 15:08:59: Attempting: Configuring console
-2025-03-25 15:08:59: Success: Configuring console
-2025-03-25 15:08:59: Initializing spoon table
-2025-03-25 15:08:59: Attempting: Loading spoons
-2025-03-25 15:08:59: Loading Spoon: jjkHotkeys
-2025-03-25 15:08:59: Successfully loaded Spoon: jjkHotkeys
-2025-03-25 15:08:59: Loading Spoon: ClipboardFormatter
-2025-03-25 15:08:59: Successfully loaded Spoon: ClipboardFormatter
-2025-03-25 15:08:59: Success: Loading spoons
-2025-03-25 15:08:59: Attempting: Setting up config reload watcher
-2025-03-25 15:08:59: Success: Setting up config reload watcher
-2025-03-25 15:08:59: Attempting: Setting up jjkHotkeys
-2025-03-25 15:08:59: Binding hotkeys for jjkHotkeys
-2025-03-25 15:08:59: Starting jjkHotkeys
-2025-03-25 15:08:59: Success: Setting up jjkHotkeys
-2025-03-25 15:08:59: Attempting: Setting up quote wrapper hotkey
-2025-03-25 15:08:59: Success: Setting up quote wrapper hotkey
-2025-03-25 15:08:59: Attempting: Finalizing initialization
-2025-03-25 15:08:59: Hammerspoon configuration loaded successfully
+2025-05-06 11:20:43: Starting Hammerspoon initialization
+2025-05-06 11:20:43: Attempting: Loading hs.ipc
+2025-05-06 11:20:43: Success: Loading hs.ipc
+2025-05-06 11:20:43: Attempting: Configuring console
+2025-05-06 11:20:43: Success: Configuring console
+2025-05-06 11:20:43: Initializing spoon table
+2025-05-06 11:20:43: Attempting: Loading spoons
+2025-05-06 11:20:43: Loading Spoon: jjkHotkeys
+2025-05-06 11:20:43: Successfully loaded Spoon: jjkHotkeys
+2025-05-06 11:20:43: Loading Spoon: ClipboardFormatter
+2025-05-06 11:20:43: Successfully loaded Spoon: ClipboardFormatter
+2025-05-06 11:20:43: Loading Spoon: StringWrapper
+2025-05-06 11:20:43: Successfully loaded Spoon: StringWrapper
+2025-05-06 11:20:43: Success: Loading spoons
+2025-05-06 11:20:43: Attempting: Setting up config reload watcher
+2025-05-06 11:20:43: Success: Setting up config reload watcher
+2025-05-06 11:20:43: Attempting: Setting up jjkHotkeys
+2025-05-06 11:20:43: Binding hotkeys for jjkHotkeys
+2025-05-06 11:20:43: Starting jjkHotkeys
+2025-05-06 11:20:43: Success: Setting up jjkHotkeys
+2025-05-06 11:20:43: Attempting: Setting up standalone wrapper hotkey
+2025-05-06 11:20:43: Setting up standalone wrapper hotkey with ctrl+alt+cmd+shift+w
+2025-05-06 11:20:43: Success: Setting up standalone wrapper hotkey
+2025-05-06 11:20:43: Attempting: Setting up quote wrapper hotkey
+2025-05-06 11:20:43: Success: Setting up quote wrapper hotkey
+2025-05-06 11:20:43: Attempting: Finalizing initialization
+2025-05-06 11:20:43: Hammerspoon configuration loaded successfully

@@ -214,30 +214,28 @@ local function handleCombo(keyName)
             activeModsStr = activeModsStr .. mod .. "+"
         end
     end
-    
+
     -- If no combos defined for this key, bail early
     if not obj.hotkeyDefinitions.combos[keyName] then
         return false
     end
-    
+
     -- Check for exact combo matches first (e.g., "lcmd+lalt+lctrl")
     for comboSpec, action in pairs(obj.hotkeyDefinitions.combos[keyName]) do
-        -- Skip patterns with tap number suffixes - they're handled on key down
-        local hasTapCount = false
         if type(comboSpec) == "string" then
-            hasTapCount = string.match(comboSpec, "%d+$") ~= nil
-        end
-        
-        if not hasTapCount then
-            -- Safe string comparison - prevent nil errors
-            local comboWithPlus = comboSpec .. "+"
-            if activeModsStr == comboWithPlus then
-                action()
-                return true
+            local hasTapCount = string.match(comboSpec, "%d+$") ~= nil
+            if not hasTapCount then
+                local comboWithPlus = comboSpec .. "+"
+                if activeModsStr == comboWithPlus then
+                    action()
+                    return true
+                end
             end
+        else
+            log.w("Invalid comboSpec type: expected string, got " .. type(comboSpec))
         end
     end
-    
+
     return false
 end
 

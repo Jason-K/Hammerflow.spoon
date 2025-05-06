@@ -77,7 +77,10 @@ safeCall("Loading spoons", function()
   
   local clipFormatter = safeLoadSpoon("ClipboardFormatter")
   if clipFormatter then spoon.ClipboardFormatter = clipFormatter end
-end)
+
+  local stringWrapper = safeLoadSpoon("StringWrapper")
+  if stringWrapper then spoon.StringWrapper = stringWrapper end
+  end)
 
 -- -----------------------------------------------------------------------
 -- MODULE - AUTO RELOAD ON SAVE
@@ -109,14 +112,6 @@ local superduper = { "lcmd", "lalt", "lctrl", "lshift", "fn" }
 local ctrl_cmd   = { "lcmd", "lctrl" }
 local meh        = { "ralt", "rctrl", "rshift" }
 
--- safeCall("Setting up SpoonInstall variable", function()
---  if spoon.SpoonInstall then
---    Install = spoon.SpoonInstall
---  else
---    debugLog("SpoonInstall not available")
---  end
--- end)
-
 -- -----------------------------------------------------------------------
 -- MODULE - jjkHotkeys IMPLEMENTATION (CENTRAL HOTKEY MANAGER)
 -- -----------------------------------------------------------------------
@@ -124,17 +119,22 @@ local meh        = { "ralt", "rctrl", "rshift" }
 safeCall("Setting up jjkHotkeys", function()
   if spoon.jjkHotkeys then
     debugLog("Binding hotkeys for jjkHotkeys")
-    
+
+    -- Enable debug mode to help troubleshoot
+    spoon.jjkHotkeys:toggleDebug(true)
+
     spoon.jjkHotkeys:bindHotkeys({
       -- Right command functionality
       modTaps = {
         ["rcmd"] = {
           double = function()
+            debugLog("rcmd double-tap detected")
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatSelection()
             end
           end,
           hold = function()
+            debugLog("rcmd hold detected")
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatClipboard()
             end
@@ -145,13 +145,27 @@ safeCall("Setting up jjkHotkeys", function()
       combos = {
         ["v"] = {
           ["lcmd+lalt+lctrl"] = function()
+            debugLog("hyper+v detected")
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatSelection()
             end
           end,
           ["lcmd+lalt+lctrl+lshift"] = function()
+            debugLog("super+v detected")
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatClipboard()
+            end
+          end,
+        },
+        ["w"] = {
+          ["lcmd+lalt+lctrl+lshift"] = function()
+            debugLog("super+w detected")
+            if spoon.StringWrapper then
+              debugLog("Calling StringWrapper:wrapSelection()")
+              spoon.StringWrapper:wrapSelection()
+            else
+              debugLog("StringWrapper spoon not available")
+              hs.alert.show("StringWrapper spoon not available")
             end
           end,
         },
@@ -165,6 +179,27 @@ safeCall("Setting up jjkHotkeys", function()
     debugLog("jjkHotkeys Spoon not loaded")
     hs.alert.show("jjkHotkeys Spoon not loaded")
   end
+end)
+
+-- -----------------------------------------------------------------------
+-- STANDALONE WRAPPER FUNCTIONALITY
+-- -----------------------------------------------------------------------
+
+safeCall("Setting up standalone wrapper hotkey", function()
+  debugLog("Setting up standalone wrapper hotkey with ctrl+alt+cmd+shift+w")
+  
+  -- Create a direct hotkey binding as a fallback to see if that works
+  hs.hotkey.bind({"ctrl", "alt", "cmd", "shift"}, "w", function()
+    debugLog("Direct hotkey (ctrl+alt+cmd+shift+w) triggered")
+    
+    if spoon.StringWrapper then
+      debugLog("Calling StringWrapper:wrapSelection() via direct hotkey")
+      spoon.StringWrapper:wrapSelection()
+    else
+      debugLog("StringWrapper spoon not available (direct hotkey)")
+      hs.alert.show("StringWrapper spoon not available")
+    end
+  end)
 end)
 
 -- -----------------------------------------------------------------------
