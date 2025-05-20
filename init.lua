@@ -2,26 +2,20 @@
 -- DEBUGGING HELPERS
 -- -----------------------------------------------------------------------
 
--- Create a log file for debugging
-local debugLogFile = io.open(os.getenv("HOME") .. "/.hammerspoon/debug_log.txt", "w")
-local function debugLog(message)
-  if debugLogFile then
-    debugLogFile:write(os.date("%Y-%m-%d %H:%M:%S") .. ": " .. tostring(message) .. "\n")
-    debugLogFile:flush()
-  end
-end
+-- Use hs.logger for logging
+local mainLogger = hs.logger.new("mainInit", "debug") -- Changed "mainConfig" to "mainInit" for clarity
 
-debugLog("Starting Hammerspoon initialization")
+mainLogger:d("Starting Hammerspoon initialization") -- Replaced debugLog
 
 -- Error handling wrapper
 local function safeCall(description, func)
-  debugLog("Attempting: " .. description)
+  mainLogger:d("Attempting: " .. description) -- Replaced debugLog
   local success, result = pcall(func)
   if not success then
-    debugLog("ERROR in " .. description .. ": " .. tostring(result))
+    mainLogger:e("ERROR in " .. description .. ": " .. tostring(result)) -- Replaced debugLog
     hs.alert.show("Error: " .. description)
   -- else
-    -- debugLog("Success: " .. description)
+    -- mainLogger:d("Success: " .. description) -- Replaced debugLog (optional)
   end
   return success, result
 end
@@ -48,22 +42,22 @@ end)
 
 -- Initialize spoon table if it doesn't exist
 if spoon == nil then
-  debugLog("Initializing spoon table")
+  mainLogger:d("Initializing spoon table") -- Replaced debugLog
   spoon = {}
 end
 
 -- Safely load Spoons with error handling
 local function safeLoadSpoon(spoonName)
-  debugLog("Loading Spoon: " .. spoonName)
+  mainLogger:d("Loading Spoon: " .. spoonName) -- Replaced debugLog
   local status, spoonOrError = pcall(function() return hs.loadSpoon(spoonName) end)
   if not status then
     local errorMsg = "Error loading " .. spoonName .. ": " .. tostring(spoonOrError)
-    debugLog(errorMsg)
+    mainLogger:e(errorMsg) -- Replaced debugLog and print
     hs.alert.show("Error loading " .. spoonName .. " Spoon")
-    print(errorMsg)
+    -- Removed print(errorMsg) as logger handles it
     return nil
   end
-  debugLog("Successfully loaded Spoon: " .. spoonName)
+  mainLogger:d("Successfully loaded Spoon: " .. spoonName) -- Replaced debugLog
   return spoonOrError
 end
 
@@ -89,7 +83,7 @@ safeCall("Loading spoons", function()
 local function reloadConfig(files)
   for _, file in pairs(files) do
     if file:sub(-4) == ".lua" then
-      debugLog("Config file changed: " .. file .. ", reloading...")
+      mainLogger:d("Config file changed: " .. file .. ", reloading...") -- Replaced debugLog
       hs.reload()
       hs.alert.show('Config Reloaded')
       return
@@ -113,28 +107,52 @@ local ctrl_cmd   = { "lcmd", "lctrl" }
 local meh        = { "ralt", "rctrl", "rshift" }
 
 -- -----------------------------------------------------------------------
+-- QUOTE WRAPPER HELPER FUNCTION
+-- -----------------------------------------------------------------------
+local function wrapSelectionWithQuotes()
+  mainLogger:d("wrapSelectionWithQuotes called")
+  -- Step 1: Copy whatever is currently selected
+  hs.eventtap.keyStroke({"cmd"}, "c")
+  -- Step 2: Small delay to allow copy operation to complete
+  hs.timer.doAfter(0.1, function() -- Reduced delay slightly
+      -- Step 3: Get the copied text
+      local selectedText = hs.pasteboard.getContents()
+      if selectedText and #selectedText > 0 then -- Check if text is not empty
+          -- Step 4: Add quotes
+          local quotedText = '"' .. selectedText .. '"'
+          hs.pasteboard.setContents(quotedText)
+          -- Step 5: Paste new text
+          hs.eventtap.keyStroke({"cmd"}, "v")
+          mainLogger:d("Selection wrapped with quotes and pasted: " .. quotedText)
+      else
+          mainLogger:w("No text selected or clipboard empty, cannot wrap with quotes")
+      end
+  end)
+end
+
+-- -----------------------------------------------------------------------
 -- MODULE - jjkHotkeys IMPLEMENTATION (CENTRAL HOTKEY MANAGER)
 -- -----------------------------------------------------------------------
 
 safeCall("Setting up jjkHotkeys", function()
   if spoon.jjkHotkeys then
-    debugLog("Binding hotkeys for jjkHotkeys")
+    mainLogger:d("Binding hotkeys for jjkHotkeys") -- Replaced debugLog
 
     -- Enable debug mode to help troubleshoot
-    spoon.jjkHotkeys:toggleDebug(true)
+    spoon.jjkHotkeys:toggleDebug(true) -- This might use its own logger or print, review jjkHotkeys spoon later
 
     spoon.jjkHotkeys:bindHotkeys({
       -- Right command functionality
       modTaps = {
         ["rcmd"] = {
           double = function()
-            debugLog("rcmd double-tap detected")
+            mainLogger:d("rcmd double-tap detected") -- Replaced debugLog
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatSelection()
             end
           end,
           hold = function()
-            debugLog("rcmd hold detected")
+            mainLogger:d("rcmd hold detected") -- Replaced debugLog
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatClipboard()
             end
@@ -144,98 +162,66 @@ safeCall("Setting up jjkHotkeys", function()
       -- Consolidated key combos
       combos = {
         ["v"] = {
-          ["lcmd+lalt+lctrl"] = function()
-            debugLog("hyper+v detected")
+          ["lcmd+lalt+lctrl"] = function() -- hyper+v
+            mainLogger:d("hyper+v detected for ClipboardFormatter:formatSelection()") 
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatSelection()
+            else
+              mainLogger:e("ClipboardFormatter spoon not available for hyper+v")
             end
           end,
-          ["lcmd+lalt+lctrl+lshift"] = function()
-            debugLog("super+v detected")
+          ["lcmd+lalt+lctrl+lshift"] = function() -- super+v
+            mainLogger:d("super+v detected for ClipboardFormatter:formatClipboard()") 
             if spoon.ClipboardFormatter then
               spoon.ClipboardFormatter:formatClipboard()
+            else
+              mainLogger:e("ClipboardFormatter spoon not available for super+v")
             end
           end,
         },
         ["w"] = {
-          ["lcmd+lalt+lctrl+lshift"] = function()
-            debugLog("super+w detected")
+          ["lcmd+lalt+lctrl+lshift"] = function() -- super+w
+            mainLogger:d("super+w detected in init.lua") 
             if spoon.StringWrapper then
-              debugLog("Calling StringWrapper:wrapSelection()")
+              mainLogger:d("Found spoon.StringWrapper, attempting to call :wrapSelection()")
               spoon.StringWrapper:wrapSelection()
             else
-              debugLog("StringWrapper spoon not available")
-              hs.alert.show("StringWrapper spoon not available")
+              mainLogger:e("StringWrapper spoon not available when super+w was pressed.")
             end
+          end,
+        },
+        ["'"] = { -- New entry for quote wrapper
+          ["lcmd+lalt+lctrl"] = function() -- hyper+'
+            mainLogger:d("hyper+' detected for wrapSelectionWithQuotes()")
+            wrapSelectionWithQuotes()
           end,
         },
       }
     })
 
     -- Start jjkHotkeys
-    debugLog("Starting jjkHotkeys")
+    mainLogger:d("Starting jjkHotkeys") -- Replaced debugLog
     spoon.jjkHotkeys:start()
   else
-    debugLog("jjkHotkeys Spoon not loaded")
+    mainLogger:e("jjkHotkeys Spoon not loaded") -- Replaced debugLog
     hs.alert.show("jjkHotkeys Spoon not loaded")
   end
 end)
 
 -- -----------------------------------------------------------------------
--- STANDALONE WRAPPER FUNCTIONALITY
+-- STANDALONE WRAPPER FUNCTIONALITY (REMOVED - Integrated into jjkHotkeys)
 -- -----------------------------------------------------------------------
 
-safeCall("Setting up standalone wrapper hotkey", function()
-  debugLog("Setting up standalone wrapper hotkey with ctrl+alt+cmd+shift+w")
-  
-  -- Create a direct hotkey binding as a fallback to see if that works
-  hs.hotkey.bind({"ctrl", "alt", "cmd", "shift"}, "w", function()
-    debugLog("Direct hotkey (ctrl+alt+cmd+shift+w) triggered")
-    
-    if spoon.StringWrapper then
-      debugLog("Calling StringWrapper:wrapSelection() via direct hotkey")
-      spoon.StringWrapper:wrapSelection()
-    else
-      debugLog("StringWrapper spoon not available (direct hotkey)")
-      hs.alert.show("StringWrapper spoon not available")
-    end
-  end)
-end)
-
 -- -----------------------------------------------------------------------
--- QUOTE WRAPPER FUNCTIONALITY
+-- QUOTE WRAPPER FUNCTIONALITY (REMOVED - Integrated into jjkHotkeys)
 -- -----------------------------------------------------------------------
-
-safeCall("Setting up quote wrapper hotkey", function()
-  hs.hotkey.bind({"ctrl", "alt", "cmd"}, "'", function()
-    -- Step 1: Copy whatever is currently selected
-    hs.eventtap.keyStroke({"cmd"}, "c")
-
-    -- Step 2: Small delay to allow copy operation to complete
-    hs.timer.doAfter(0.2, function()
-        -- Step 3: Get the copied text
-        local selectedText = hs.pasteboard.getContents()
-        if selectedText then
-            -- Step 4: Add quotes
-            local quotedText = '"' .. selectedText .. '"'
-            hs.pasteboard.setContents(quotedText)
-
-            -- Step 5: Paste new text
-            hs.eventtap.keyStroke({"cmd"}, "v")
-        end
-    end)
-  end)
-end)
 
 -- -----------------------------------------------------------------------
 -- FINALIZATION
 -- -----------------------------------------------------------------------
 
 safeCall("Finalizing initialization", function()
-  debugLog("Hammerspoon configuration loaded successfully")
+  mainLogger:i("Hammerspoon configuration loaded successfully") -- Replaced debugLog, changed to info
   hs.alert.show("Hammerspoon configuration loaded")
-  if debugLogFile then
-    debugLogFile:close()
-    debugLogFile = nil
-  end
+  -- Removed debugLogFile:close() as hs.logger handles its output streams
 end)

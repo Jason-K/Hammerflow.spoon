@@ -14,6 +14,16 @@ obj.author = "Jason K"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
+-- Add a logger for the Spoon
+obj.logger = hs.logger.new(obj.name, "warning") -- Default to warning, can be changed
+
+function obj:init()
+    self:loadPDMapping()
+    -- any other initialization
+    self.logger.i("ClipboardFormatter initialized")
+    return self
+end
+
 function obj:formatAsCurrency(number)
     -- Round to 2 decimal places
     local rounded = math.floor(number * 100 + 0.5) / 100
@@ -140,6 +150,9 @@ function obj:evaluateEquation(equation)
                            :gsub("^%s", "")   -- Trim
                            :gsub("%s$", "")   -- Trim
     
+    -- Stricter sanitization: remove anything not a digit, operator, dot, or parenthesis
+    cleaned = cleaned:gsub("[^%d%.%+%-%*/%s%(%)]", "")
+
     -- Create a safe environment for evaluation
     local env = {
         math = math,
@@ -281,8 +294,23 @@ end
 function obj:loadPDMapping()
     -- Load and store the PD mapping when the spoon initializes
     self.pdMapping = {}
-    local file = io.open("/Users/jason/Scripts/Python/JJK_PDtoWeeksDollars/PD - percent to weeks.txt", "r")
+    -- Try to load from Spoon's directory first
+    local pdPath = self.spoonPath and (self.spoonPath .. "/PD - percent to weeks.txt") or nil
+    local file
+    
+    if pdPath then
+        file = io.open(pdPath, "r")
+    end
+
+    -- Fallback to the original hardcoded path if not found in Spoon directory or if spoonPath is nil
+    if not file then
+        self.logger.w("PD mapping file not found in Spoon directory: " .. tostring(pdPath) .. ". Falling back to hardcoded path.")
+        pdPath = "/Users/jason/Scripts/Python/JJK_PDtoWeeksDollars/PD - percent to weeks.txt" -- Original path
+        file = io.open(pdPath, "r")
+    end
+
     if file then
+        self.logger.i("Loading PD mapping from: " .. pdPath)
         for line in file:lines() do
             local key, value = line:match("(%d+)%s*:%s*([%d%.]+)")
             if key and value then
@@ -290,6 +318,8 @@ function obj:loadPDMapping()
             end
         end
         file:close()
+    else
+        self.logger.e("Could not open PD mapping file from Spoon directory or fallback path: " .. pdPath)
     end
 end
 
@@ -433,7 +463,7 @@ function obj:splitDate(dateStr)
 end
 
 function obj:handleDateDifference(content)
-    print("handleDateDifference input:", content)
+    self.logger.d("handleDateDifference input:", content)
     
     -- Split on common separators
     local parts = {}
@@ -469,7 +499,7 @@ function obj:handleDateDifference(content)
     local date2 = self:parseDate(parts[2])
     
     if not (date1 and date2) then
-        print("Failed to parse one or both dates")
+        self.logger.w("Failed to parse one or both dates")
         return nil
     end
     
@@ -485,7 +515,7 @@ function obj:handleDateDifference(content)
         self:formatDate(date2),
         days)
     
-    print("Final result:", result)
+    self.logger.d("Final result:", result)
     return result
 end
 
@@ -776,7 +806,7 @@ end
 local KnownPatterns = {
     ["$170.89/7"] = {36, 49, 55, 48, 46, 56, 57, 47, 55},  -- "$170.89/7"
     ["5/6/23 to 6/14/23"] = {53, 47, 54, 47, 50, 51, 32, 116, 111, 32, 54, 47, 49, 54, 47, 50, 51},  -- "5/6/23 to 6/14/23"
-    ["5/6/23 and 6/14/23"] = {53, 47, 54, 47, 50, 51, 32, 97, 110, 100, 32, 54, 47, 49, 52, 47, 50, 51}  -- "5/6/23 and 6/14/23"
+    ["5/6/23 and 6/14/23"] = {53, 47, 54, 47, 50, 51, 32, 97, 110, 100, 32, 54, 47, 49, 54, 47, 50, 51}  -- "5/6/23 and 6/14/23"
 }
 
 function obj:compareByteArrays(arr1, arr2)

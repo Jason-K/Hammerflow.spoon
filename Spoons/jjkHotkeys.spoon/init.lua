@@ -28,9 +28,10 @@ obj.license  = "MIT - https://opensource.org/licenses/MIT"
 -- Timeout for multi-taps (pressing same key multiple times within this many seconds).
 obj.multiTapTimeout = 0.25
 
--- Timeout for distinguishing tap vs hold (press and release quickly vs. holding down)
-obj.tapHoldTimeout = 0.35
-obj.holdDelay = 0.35
+-- Timeout for distinguishing a quick tap from a sustained hold.
+-- If a key (especially a modifier) is released within this duration, it might be part of a tap action.
+-- If held longer, it\\'s considered a hold.
+obj.tapHoldTimeout = 0.28 -- Adjusted from 0.35
 
 -- Timeout for waiting between keys in a short combo sequence (e.g., a+b).
 obj.combinationTimeout = 0.6
@@ -39,10 +40,11 @@ obj.combinationTimeout = 0.6
 obj.sequenceTimeout = 1.0
 
 -- Delay before firing a single-tap action (to allow for double-tap detection)
+-- This should generally be less than or equal to multiTapTimeout.
 obj.doubleTapDelay = 0.2
 
 -- Whether or not to log debug output.
-obj.debug = false
+obj.debug = true -- Enabled by default for easier review and initial setup
 
 -- Safe mode - additional error checking
 obj.safeMode = true
@@ -207,35 +209,81 @@ local function handleTap(keyName, nTaps, isHold)
 end
 
 local function handleCombo(keyName)
-    -- Create a string representing currently active modifiers
-    local activeModsStr = ""
+    dbg("handleCombo called for key: %s", keyName)
+
+    -- Create a sorted list of active modifiers
+    local activeModsList = {}
     for mod, isActive in pairs(leftRightModifiers) do
         if isActive then
-            activeModsStr = activeModsStr .. mod .. "+"
+            table.insert(activeModsList, mod)
         end
     end
+    table.sort(activeModsList)
+    
+    -- Create a canonical string for active modifiers (e.g., "lalt+lcmd+lctrl+")
+    -- Ensure a trailing '+' only if there are modifiers, for consistent comparison
+    local canonicalActiveModsStr = ""
+    if next(activeModsList) then -- Check if activeModsList is not empty
+        canonicalActiveModsStr = table.concat(activeModsList, "+") .. "+"
+    end
+    dbg("Canonical activeModsStr: '%s'", canonicalActiveModsStr)
 
-    -- If no combos defined for this key, bail early
     if not obj.hotkeyDefinitions.combos[keyName] then
+        dbg("No combo definitions found for key: %s", keyName)
         return false
     end
 
-    -- Check for exact combo matches first (e.g., "lcmd+lalt+lctrl")
-    for comboSpec, action in pairs(obj.hotkeyDefinitions.combos[keyName]) do
-        if type(comboSpec) == "string" then
-            local hasTapCount = string.match(comboSpec, "%d+$") ~= nil
-            if not hasTapCount then
-                local comboWithPlus = comboSpec .. "+"
-                if activeModsStr == comboWithPlus then
-                    action()
-                    return true
+    for comboSpecString, action in pairs(obj.hotkeyDefinitions.combos[keyName]) do
+        dbg("Checking user-defined comboSpecString: '%s' for key: %s", comboSpecString, keyName)
+        if type(comboSpecString) == "string" then
+            -- Check if this comboSpecString is for a multi-tap combo (e.g., "lcmd2")
+            -- These are handled in keyDown and don't use the string modifier list in the same way.
+            if string.match(comboSpecString, "%d+$") then
+                dbg("Skipping tap-count comboSpecString '%s' in general combo handling", comboSpecString)
+                goto continue_combo_loop -- Lua's way to continue to next iteration
+            end
+
+            -- Parse the user-defined comboSpecString (e.g., "lcmd+lalt+lctrl")
+            local specModsList = {}
+            for mod in string.gmatch(comboSpecString, "([^%+%s]+)") do -- Match non-'+' and non-whitespace
+                table.insert(specModsList, mod)
+            end
+            table.sort(specModsList)
+            
+            -- Create a canonical string for the defined combo (e.g., "lalt+lcmd+lctrl+")
+            local canonicalComboSpecStr = ""
+            if next(specModsList) then -- Check if specModsList is not empty
+                 canonicalComboSpecStr = table.concat(specModsList, "+") .. "+"
+            end
+            dbg("Comparing canonicalActiveModsStr '%s' with canonicalComboSpecStr '%s' (from '%s')", canonicalActiveModsStr, canonicalComboSpecStr, comboSpecString)
+
+            if canonicalActiveModsStr == canonicalComboSpecStr then
+                -- Check if this exact combo (key + sorted modifiers) has already fired
+                -- This helps prevent issues if keyUp for a modifier is missed and keyUp for the non-modifier fires.
+                local comboId = canonicalActiveModsStr .. keyName
+                if firedCombos[comboId] then
+                    dbg("Combo %s already fired for this press sequence. Skipping.", comboId)
+                    goto continue_combo_loop
                 end
+
+                dbg("MATCH FOUND! Firing action for %s with %s", keyName, comboSpecString)
+                firedCombos[comboId] = true -- Mark as fired
+                
+                -- Cancel hold and single tap for all modifiers involved in this combo
+                for _, modName in ipairs(activeModsList) do
+                    cancelHoldTimer(modName)
+                    cancelPendingSingleTap(modName)
+                end
+
+                action()
+                return true -- Combo handled
             end
         else
-            log.w("Invalid comboSpec type: expected string, got " .. type(comboSpec))
+            log.w("Invalid comboSpecString type in hotkeyDefinitions.combos[%s]: expected string, got %s", keyName, type(comboSpecString))
         end
+        ::continue_combo_loop::
     end
-
+    dbg("No matching combo found for key %s with active mods '%s'", keyName, canonicalActiveModsStr)
     return false
 end
 
