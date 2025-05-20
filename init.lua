@@ -20,8 +20,8 @@ local function safeCall(description, func)
   if not success then
     debugLog("ERROR in " .. description .. ": " .. tostring(result))
     hs.alert.show("Error: " .. description)
-  else
-    debugLog("Success: " .. description)
+  -- else
+    -- debugLog("Success: " .. description)
   end
   return success, result
 end

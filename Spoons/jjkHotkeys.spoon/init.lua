@@ -140,7 +140,7 @@ end
 local function resetSequence(reason)
     masterSequence = {}
     if activeLayer then
-        dbg("Leaving layer '%s' (reason: %s)", activeLayer, reason or "")
+        -- dbg("Leaving layer '%s' (reason: %s)", activeLayer, reason or "")
         activeLayer = nil
     end
 end
@@ -314,7 +314,7 @@ local function flagsChangedCallback(evt)
     -- Handle pressed modifiers
     for mod, change in pairs(modChanges) do
         if change == "pressed" then
-            dbg("%s pressed", mod)
+            -- dbg("%s pressed", mod)
             
             -- Reset tracking for this modifier
             regularKeyWasPressed[mod] = false
@@ -326,14 +326,14 @@ local function flagsChangedCallback(evt)
             -- Count taps within timeout window
             if lastKeyTime[mod] and (now - lastKeyTime[mod]) <= obj.multiTapTimeout then
                 keyTapCount[mod] = (keyTapCount[mod] or 0) + 1
-                dbg("%s tapped %d times", mod, keyTapCount[mod])
+                -- dbg("%s tapped %d times", mod, keyTapCount[mod])
                 
                 -- Handle double-tap immediately when detected
                 if keyTapCount[mod] == 2 then
                     -- Improved double-tap detection
                     local modTaps = obj.hotkeyDefinitions.modTaps
                     if modTaps and modTaps[mod] and modTaps[mod].double then
-                        dbg("Double-tap detected - calling ClipboardFormatter:formatSelection()")
+                        -- dbg("Double-tap detected - calling ClipboardFormatter:formatSelection()")
                         modTaps[mod].double()
                         processedSingleTap[mod] = true
                         keyTapCount[mod] = 0 -- Reset count after handling
@@ -341,7 +341,7 @@ local function flagsChangedCallback(evt)
                 end
             else
                 keyTapCount[mod] = 1
-                dbg("First tap of %s", mod)
+                -- dbg("First tap of %s", mod)
             end
             
             -- Update timing tracking
@@ -363,7 +363,7 @@ local function flagsChangedCallback(evt)
                    not regularKeyWasPressed[mod] and not holdFiredFor[mod] then
                     local modTaps = obj.hotkeyDefinitions.modTaps
                     if modTaps and modTaps[mod] and modTaps[mod].hold then
-                        dbg("Executing hold for %s", mod)
+                        -- dbg("Executing hold for %s", mod)
                         modTaps[mod].hold()
                         processedSingleTap[mod] = true
                         holdFiredFor[mod] = true
@@ -372,8 +372,8 @@ local function flagsChangedCallback(evt)
             end)
             
         elseif change == "released" then
-            dbg("%s released", mod)
-            
+            -- dbg("%s released", mod)
+
             -- Cancel hold timer
             if holdTimer[mod] then
                 holdTimer[mod]:stop()
@@ -382,8 +382,8 @@ local function flagsChangedCallback(evt)
             
             -- Calculate press duration
             local pressDuration = now - (modifierPressStartTime[mod] or 0)
-            dbg("%s was pressed for %.2f seconds", mod, pressDuration)
-            
+            -- dbg("%s was pressed for %.2f seconds", mod, pressDuration)
+
             -- Only consider single tap if:
             -- 1. Press was quick (not a hold)
             -- 2. No regular key was pressed with this modifier
@@ -405,7 +405,7 @@ local function flagsChangedCallback(evt)
                     if pendingSingleTaps[mod] then
                         local modTaps = obj.hotkeyDefinitions.modTaps
                         if modTaps and modTaps[mod] and modTaps[mod].single then
-                            dbg("Executing delayed single tap for %s", mod)
+                            -- dbg("Executing delayed single tap for %s", mod)
                             modTaps[mod].single()
                         end
                         pendingSingleTaps[mod] = nil
@@ -445,7 +445,7 @@ local function keyEventCallback(evt)
     
     if isDown then
         -- Key down logic
-        dbg("Key down: %s", keyName)
+        -- dbg("Key down: %s", keyName)
         
         -- Mark that regular keys are being pressed with modifiers
         -- Also cancel any pending single tap actions and hold timers for these modifiers
@@ -456,7 +456,7 @@ local function keyEventCallback(evt)
         
         if lastKeyTime[keyName] and (now - lastKeyTime[keyName]) <= obj.multiTapTimeout then
             keyTapCount[keyName] = (keyTapCount[keyName] or 0) + 1
-            dbg("%s tapped %d times", keyName, keyTapCount[keyName])
+            -- dbg("%s tapped %d times", keyName, keyTapCount[keyName])
         else
             keyTapCount[keyName] = 1
         end
@@ -485,7 +485,7 @@ local function keyEventCallback(evt)
                     tapCount = tonumber(tapCount)
                     
                     if leftRightModifiers[mod] and keyTapCount[keyName] == tapCount then
-                        dbg("Multi-tap combo matched: %s%d", mod, tapCount)
+                        -- dbg("Multi-tap combo matched: %s%d", mod, tapCount)
                         
                         -- Cancel hold and single tap for all modifiers
                         for usedMod, _ in pairs(leftRightModifiers) do
@@ -518,7 +518,7 @@ local function keyEventCallback(evt)
         end
         
     else -- Key up
-        dbg("Key up: %s", keyName)
+        -- dbg("Key up: %s", keyName)
         pressInProgress[keyName] = false
         
         -- Stop hold timer
@@ -539,7 +539,7 @@ local function keyEventCallback(evt)
         -- Check for combos on key up, but only for single taps (not multi-taps)
         if next(leftRightModifiers) and keyTapCount[keyName] == 1 then
             if handleCombo(keyName) then
-                dbg("Combo handled for %s", keyName)
+                -- "Combo handled for %s", keyName)
             end
         end
         
@@ -658,7 +658,7 @@ function obj:start()
     pendingSingleTapTimers = {}
     holdFiredFor = {}
     
-    dbg("jjkHotkeys started")
+    -- dbg("jjkHotkeys started")
     return self
 end
 
