@@ -1109,6 +1109,31 @@ function obj:performSelectionCopy()
     end
 end
 
+function obj:formatSelectionSafe()
+    -- Store original clipboard content
+    local originalClipboard = hs.pasteboard.getContents()
+    
+    -- Simulate copy to get selected text
+    hs.eventtap.keyStroke({"cmd"}, "c")
+    
+    -- Small delay to allow copy to complete
+    hs.timer.usleep(100000) -- 100ms
+    
+    -- Check if clipboard changed
+    local newClipboard = hs.pasteboard.getContents()
+    
+    if originalClipboard ~= newClipboard and newClipboard and newClipboard ~= "" then
+        -- Something was actually selected, proceed with formatting
+        self:formatSelection()
+    else
+        -- Nothing was selected, restore original clipboard
+        if originalClipboard then
+            hs.pasteboard.setContents(originalClipboard)
+        end
+        hs.alert.show("No text selected")
+    end
+end
+
 function obj:formatClipboardDirect()
     -- Get clipboard content using our robust method
     local content = self:getClipboardContent()
