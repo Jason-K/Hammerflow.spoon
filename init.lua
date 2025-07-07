@@ -67,6 +67,7 @@ safeCall("Configuring console", function()
   hs.console.clearConsole()
   hs.console.darkMode(true)
   hs.window.animationDuration = 0.0
+  hs.application.enableSpotlightForNameSearches(true)
 end)
 
 safeCall("Setting up config reload watcher", function()
@@ -104,6 +105,7 @@ safeCall("Loading spoons", function()
     spoon.StringWrapper = stringWrapper 
     wrapString = function() stringWrapper:wrapSelection() end
     quoteString = function() stringWrapper:wrapSelectionWithQuotes() end
+    wrapWithParam = function(param) stringWrapper:wrapSelectionWithParam(param) end
   end
 
 end)
@@ -116,3 +118,5 @@ safeCall("Finalizing initialization", function()
   mainLogger:i("Hammerspoon configuration loaded successfully") -- Replaced debugLog, changed to info
   hs.alert.show("Hammerspoon configuration loaded")
 end)
+
+-- require("rcmd")

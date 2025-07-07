@@ -42,67 +42,96 @@ function obj:wrapSelection()
   -- Store the current clipboard content to restore later
   local originalClipboard = hs.pasteboard.getContents()
   self.logger.i("Original clipboard saved")
-  
-  -- Send Cmd+C to copy selected text - explicitly wait for it to complete
-  hs.eventtap.keyStroke({"cmd"}, "c", 0)
-  
-  -- Use a slightly longer delay to ensure copy completes
-  hs.timer.doAfter(0.3, function()
-    -- Get the copied text from the clipboard 
-    local selectedText = hs.pasteboard.getContents()
-    self.logger.i("Got text from clipboard: " .. (selectedText and #selectedText > 0 and "text length: " .. #selectedText or "empty"))
-    
-    -- Check if clipboard actually changed (something was selected)
-    if originalClipboard == selectedText or not selectedText or #selectedText == 0 then
-      self.logger.w("No text was selected/copied")
-      hs.alert.show("No text selected")
-      return
+
+  -- CRITICAL FIX: For some applications, need to specifically focus the window first
+  local currentApp = hs.application.frontmostApplication()
+  if currentApp then
+    local win = currentApp:focusedWindow()
+    if win then
+      win:focus()
     end
+  end
 
-    -- Create a one-time eventtap to listen for the next key press
-    local wrapperTap
-    wrapperTap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(event)
-        -- Get the pressed character (respecting shift, etc.)
-        local c = event:getCharacters(true)
-        self.logger.i("Key pressed: " .. c)
-        
-        if #c == 1 then
-            -- Get the appropriate wrapper pair
-            local openChar, closeChar = self:getWrapperPair(c)
-            
-            -- Wrap the selected text
-            local wrapped = openChar .. selectedText .. closeChar
-            self.logger.i("Wrapped text created with '" .. openChar .. "' and '" .. closeChar .. "': " .. wrapped:sub(1, 20) .. (wrapped:len() > 20 and "..." or ""))
+  -- Use applescript for more reliable copying
+  hs.osascript.applescript([[tell application "System Events" 
+      keystroke "c" using {command down}
+  end tell]])
+  
+  -- Wait for clipboard to update
+  hs.timer.usleep(300000) -- 300ms
+  
+  -- Get the copied text from the clipboard 
+  local selectedText = hs.pasteboard.getContents()
+  
+  -- If that didn't work, try with eventtap as fallback (with protection)
+  if not selectedText or selectedText == "" or selectedText == originalClipboard then
+    -- Try once more with safe keyboard events
+    local function safeKeyStroke()
+      pcall(function()
+        -- Manually generate the key events in sequence with pauses
+        local cmdDown = hs.eventtap.event.newKeyEvent(hs.keycodes.map.cmd, true)
+        cmdDown:post()
+        hs.timer.usleep(50000) -- 50ms pause
+        local cDown = hs.eventtap.event.newKeyEvent("c", true)
+        cDown:post()
+        hs.timer.usleep(50000) -- 50ms pause
+        local cUp = hs.eventtap.event.newKeyEvent("c", false)
+        cUp:post()
+        hs.timer.usleep(50000) -- 50ms pause
+        local cmdUp = hs.eventtap.event.newKeyEvent(hs.keycodes.map.cmd, false)
+        cmdUp:post()
+      end)
+    end
+    safeKeyStroke()
+    hs.timer.usleep(300000) -- 300ms
+    selectedText = hs.pasteboard.getContents()
+  end
 
-            -- Put the wrapped text on clipboard, then paste
-            hs.pasteboard.setContents(wrapped)
-            self.logger.i("Wrapped text placed on clipboard")
-            
-            -- Add slight delay before paste
-            hs.timer.doAfter(0.1, function()
-                hs.eventtap.keyStroke({"cmd"}, "v", 0)
-                self.logger.i("Paste command sent")
-                
-                -- Restore original clipboard after a short delay
-                hs.timer.doAfter(0.3, function()
-                    if originalClipboard then
-                        hs.pasteboard.setContents(originalClipboard)
-                        self.logger.i("Original clipboard restored")
-                    end
-                end)
-            end)
-        end
+  self.logger.i("Got text from clipboard: " .. (selectedText and #selectedText > 0 and "text length: " .. #selectedText or "empty"))
+  
+  -- Check if clipboard actually changed (something was selected)
+  if originalClipboard == selectedText or not selectedText or #selectedText == 0 then
+    self.logger.w("No text was selected/copied")
+    hs.alert.show("No text selected")
+    return
+  end
 
-        -- Stop listening since we only want the very next key
-        wrapperTap:stop()
-        self.logger.i("Eventtap stopped")
-        return true  -- consume the event so it doesn't also type
-    end)
-    
-    hs.alert.show("Type a character to wrap with")
-    self.logger.i("Starting eventtap to listen for next key press")
-    wrapperTap:start()
+  -- Create a one-time eventtap to listen for the next key press
+  local wrapperTap
+  wrapperTap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(event)
+      -- Get the pressed character (respecting shift, etc.)
+      local c = event:getCharacters(true)
+      self.logger.i("Key pressed: " .. c)
+      if #c == 1 then
+          -- Get the appropriate wrapper pair
+          local openChar, closeChar = self:getWrapperPair(c)
+          -- Wrap the selected text
+          local wrapped = openChar .. selectedText .. closeChar
+          self.logger.i("Wrapped text created with '" .. openChar .. "' and '" .. closeChar .. "': " .. wrapped:sub(1, 20) .. (wrapped:len() > 20 and "..." or ""))
+          -- Put the wrapped text on clipboard, then paste
+          hs.pasteboard.setContents(wrapped)
+          self.logger.i("Wrapped text placed on clipboard")
+          -- Add slight delay before paste
+          hs.timer.doAfter(0.1, function()
+              hs.eventtap.keyStroke({"cmd"}, "v", 0)
+              self.logger.i("Paste command sent")
+              -- Restore original clipboard after a short delay
+              hs.timer.doAfter(0.3, function()
+                  if originalClipboard then
+                      hs.pasteboard.setContents(originalClipboard)
+                      self.logger.i("Original clipboard restored")
+                  end
+              end)
+          end)
+      end
+      -- Stop listening since we only want the very next key
+      wrapperTap:stop()
+      self.logger.i("Eventtap stopped")
+      return true  -- consume the event so it doesn't also type
   end)
+  hs.alert.show("Type a character to wrap with")
+  self.logger.i("Starting eventtap to listen for next key press")
+  wrapperTap:start()
 end
 
 function obj:wrapSelectionWithQuotes()
@@ -132,6 +161,64 @@ function obj:wrapSelectionWithQuotes()
     hs.alert.show("No text selected to wrap with quotes")
     return
   end
+end
+
+function obj:wrapSelectionWithParam(param)
+  self.logger.i("wrapSelectionWithParam called with param: " .. tostring(param))
+  local originalClipboard = hs.pasteboard.getContents()
+  -- Focus window
+  local currentApp = hs.application.frontmostApplication()
+  if currentApp then
+    local win = currentApp:focusedWindow()
+    if win then win:focus() end
+  end
+  -- AppleScript copy
+  hs.osascript.applescript([[tell application "System Events" 
+      keystroke "c" using {command down}
+  end tell]])
+  hs.timer.usleep(300000)
+  local selectedText = hs.pasteboard.getContents()
+  if not selectedText or selectedText == "" or selectedText == originalClipboard then
+    -- Fallback eventtap
+    local function safeKeyStroke()
+      pcall(function()
+        local cmdDown = hs.eventtap.event.newKeyEvent(hs.keycodes.map.cmd, true)
+        cmdDown:post()
+        hs.timer.usleep(50000)
+        local cDown = hs.eventtap.event.newKeyEvent("c", true)
+        cDown:post()
+        hs.timer.usleep(50000)
+        local cUp = hs.eventtap.event.newKeyEvent("c", false)
+        cUp:post()
+        hs.timer.usleep(50000)
+        local cmdUp = hs.eventtap.event.newKeyEvent(hs.keycodes.map.cmd, false)
+        cmdUp:post()
+      end)
+    end
+    safeKeyStroke()
+    hs.timer.usleep(300000)
+    selectedText = hs.pasteboard.getContents()
+  end
+  self.logger.i("Got text from clipboard: " .. (selectedText and #selectedText > 0 and "text length: " .. #selectedText or "empty"))
+  if originalClipboard == selectedText or not selectedText or #selectedText == 0 then
+    self.logger.w("No text was selected/copied")
+    hs.alert.show("No text selected")
+    return
+  end
+  -- Use getWrapperPair logic
+  local openChar, closeChar = self:getWrapperPair(param)
+  local wrapped = openChar .. selectedText .. closeChar
+  hs.pasteboard.setContents(wrapped)
+  hs.timer.doAfter(0.1, function()
+    hs.eventtap.keyStroke({"cmd"}, "v", 0)
+    self.logger.i("Paste command sent")
+    hs.timer.doAfter(0.3, function()
+      if originalClipboard then
+        hs.pasteboard.setContents(originalClipboard)
+        self.logger.i("Original clipboard restored")
+      end
+    end)
+  end)
 end
 
 return obj

@@ -145,29 +145,23 @@ end
 function obj:evaluateEquation(equation)
     -- Clean input but preserve structure
     local cleaned = equation:gsub("(%d+)%s*%.%s*", "%1.")  -- Fix decimal points
-                           :gsub("([%+%-%*/%(%)%.])", " %1 ")  -- Space around operators
-                           :gsub("%s+", " ")  -- Normalize spaces
-                           :gsub("^%s", "")   -- Trim
-                           :gsub("%s$", "")   -- Trim
     
     -- Stricter sanitization: remove anything not a digit, operator, dot, or parenthesis
     cleaned = cleaned:gsub("[^%d%.%+%-%*/%s%(%)]", "")
 
     -- Create a safe environment for evaluation
-    local env = {
-        math = math,
-    }
+    local env = {}
     
     -- Try to evaluate the expression
-    local f, err = load("return " .. cleaned:gsub("%s+", ""), "equation", "t", env)
+    local f, err = load("return " .. cleaned, "equation", "t", env)
     if f then
         local success, result = pcall(f)
         if success and type(result) == "number" then
-            return equation .. " = " .. tostring(result)
+            return result
         end
     end
     
-    return nil, "Invalid equation format"
+    return nil
 end
 
 function obj:combinePercentages(input_string)
@@ -235,6 +229,12 @@ function obj:isArithmeticExpression(content)
 end
 
 function obj:handleCombinations(input)
+    -- New: Add a stricter check to ensure the input is likely a combination string
+    -- It should primarily contain digits, 'c', and spaces.
+    if input:gsub("[%d%s_cC]", ""):len() > 2 then
+        return nil
+    end
+
     -- Convert input into array of numbers, handling both space and no-space cases
     local numbers = {}
     -- Match numbers that are followed by optional spaces and 'c', or are at the end of string
@@ -269,22 +269,23 @@ function obj:handleCombinations(input)
     end
     
     -- Format output string with proper spacing, only showing % on final result
-    local resultString = string.format("%d", math.floor(numbers[1] * 100 + 0.5))
+    local first_num_percent = math.floor(numbers[1] * 100 + 0.5)
+    if not (first_num_percent and first_num_percent == first_num_percent) then
+        return nil -- Don't proceed if the first number is invalid
+    end
+    local resultString = string.format("%d", first_num_percent)
     
     for i = 2, #numbers do
         local num_i_percent = math.floor(numbers[i] * 100 + 0.5)
         local result_i_percent = math.floor(results[i] * 100 + 0.5)
-        
+        -- Only format if both are not nil and not NaN
+        if not (num_i_percent and result_i_percent and num_i_percent == num_i_percent and result_i_percent == result_i_percent) then
+            break
+        end
         if i < #numbers then
-            -- For intermediate steps, don't show percentage sign
-            resultString = resultString .. string.format(" c %d = %d", 
-                num_i_percent,
-                result_i_percent)
+            resultString = resultString .. string.format(" c %d = %d", num_i_percent, result_i_percent)
         else
-            -- For the final result, include the percentage sign
-            resultString = resultString .. string.format(" c %d = %d%%", 
-                num_i_percent,
-                result_i_percent)
+            resultString = resultString .. string.format(" c %d = %d%%", num_i_percent, result_i_percent)
         end
     end
     
@@ -532,52 +533,33 @@ end
 function obj:processArithmeticExpression(content)
     local hasCurrencyFlag = content:find("%$") ~= nil
     local cleaned = content:gsub("%$", ""):gsub("%s+", "")
-    local tokens = self:tokenizeExpression(cleaned)
-    local result = self:evaluateExpression(tokens)
-    if result then
-        if hasCurrencyFlag then
-            return self:formatAsCurrency(result)
-        else
-            return tostring(result)
-        end
-    end
-    return nil
-end
-
-function obj:handleRatingString(content)
-    print("handleRatingString input:", content)
     
-    -- Trim content
-    content = content:match('^%s*(.-)%s*$')
-
-    -- Pattern 1: Apportionment (e.g. 0.9 (.... = 16%) = 14.4% = 14%)
-    local prefix, remainder = content:match('^(%d+%.%d+)%s*%((.-)%)%s*(.*)$')
-    if prefix and remainder then
-        local compRating = prefix
-        -- Remove a trailing " = <number>%" from the inner part:
-        local inner = remainder:gsub("%s*=%s*([%d%.]+)%%$", " - %1")
-        inner = inner:gsub("%- %[", "-[")
-        local finalPercent = content:match('%)[%s%S]*=%s*([%d%.]+)%%%s*$')
-        if finalPercent then
-            local result = string.format('%s (%s) = %s%%', compRating, inner, finalPercent)
-            print("handleRatingString result:", result)
-            return result
+    -- Use evaluateEquation for complex expressions with parentheses
+    if cleaned:match("[%(%)]") then
+        local result = self:evaluateEquation(cleaned)
+        if result then
+            local _, resultValue = result:match("(.+) = (.+)")
+            if resultValue then
+                local numResult = tonumber(resultValue)
+                if numResult and hasCurrencyFlag then
+                    return self:formatAsCurrency(numResult)
+                elseif numResult then
+                    return tostring(numResult)
+                end
+            end
+        end
+    else
+        -- Use existing tokenization method for simple expressions
+        local tokens = self:tokenizeExpression(cleaned)
+        local result = self:evaluateExpression(tokens)
+        if result then
+            if hasCurrencyFlag then
+                return self:formatAsCurrency(result)
+            else
+                return tostring(result)
+            end
         end
     end
-
-    -- Pattern 2: Plain rating (e.g. 16.01.04.00 - 11 - [1.4]15 - 360G - 17 = 16%)
-    local main, percent = content:match('^(.-)%s*=%s*([%d%.]+)%%$')
-    if main and percent then
-        -- Remove trailing/leading spaces and dashes
-        main = main:gsub('%s*%-?%s*$', '')
-        -- Remove trailing spaces before brackets
-        main = main:gsub('%- %[', '-[')
-        local result = string.format('1.0 (%s - %s) = %s%%', main, percent, percent)
-        print("handleRatingString result:", result)
-        return result
-    end
-
-    print("No patterns matched, returning nil")
     return nil
 end
 
@@ -824,6 +806,19 @@ function obj:processClipboard(content)
     content = content:match("^%s*(.-)%s*$")
     if not content or content == "" then return nil end
     
+    -- NEW: Directly handle arithmetic expressions with $ and parentheses, e.g. ($290/7)*426
+    if content:match("%$[%d%.]+[/%*%+%-][%d%.%$%(%)]+") and content:find('%(') and content:find('%)') then
+        -- Remove all $ for evaluation
+        local evalExpr = content:gsub("%$", "")
+        local f, err = load("return " .. evalExpr)
+        if f then
+            local ok, result = pcall(f)
+            if ok and type(result) == "number" then
+                return self:formatAsCurrency(result)
+            end
+        end
+    end
+    
     -- Quick pre-check for common patterns to avoid running all checks
     local hasSlash = content:find('/')
     local hasDollar = content:find('%$')
@@ -840,10 +835,10 @@ function obj:processClipboard(content)
     end
     
     -- Most common case - check for arithmetic expressions first
-    if hasDollar or content:match("[%+%-%*/]") then
+    if hasDollar or content:match("[%+%-%*/%(%)%.]") then
         if self:isArithmeticExpression(content) then
-            local arith = self:processArithmeticExpression(content)
-            if arith then return arith end
+            local result = self:processArithmeticExpression(content)
+            if result then return result end
         end
     end
     
@@ -867,27 +862,15 @@ function obj:processClipboard(content)
 
     -- Check for date range
     if hasSlash and (content:lower():find('to') or content:lower():find('and') or content:find('%-')) then
-        local dateRange = self:processDateRange(content)
+        local dateRange = self:handleDateDifference(content)
         if dateRange then return dateRange end
-    end
-
-    -- Check for rating strings (pattern with '-' and '=')
-    if hasDash and hasEquals then
-        local rating = self:handleRatingString(content)
-        if rating then return rating end
-    end
-
-    -- Check for hammerspoon logs (less common)
-    if content:find('%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:') then
-        local strippedLogs = self:stripDateTimeStamps(content)
-        if strippedLogs then return strippedLogs end
     end
 
     -- Custom input handler for specific formats
     local inputRes = self:handleInput(content)
     if inputRes then return inputRes end
 
-    return content
+    return nil  -- Changed from returning content to returning nil when no processing is needed
 end
 
 function obj:getClipboardContent()
