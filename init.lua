@@ -1,14 +1,4 @@
 -- -----------------------------------------------------------------------
--- LOCAL VARIABLES
--- -----------------------------------------------------------------------
-
-local hyper      = { "lcmd", "lalt", "lctrl" }
-local super      = { "lcmd", "lalt", "lctrl", "lshift" }
-local superduper = { "lcmd", "lalt", "lctrl", "lshift", "fn" }
-local ctrl_cmd   = { "lcmd", "lctrl" }
-local meh        = { "ralt", "rctrl", "rshift" }
-
--- -----------------------------------------------------------------------
 -- LOCAL FUNCTIONS
 -- -----------------------------------------------------------------------
 
@@ -26,18 +16,6 @@ local function safeCall(description, func)
     -- mainLogger:d("Success: " .. description) -- Replaced debugLog (optional)
   end
   return success, result
-end
-
--- Reload configuration when files change in ~/.hammerspoon/
-local function reloadConfig(files)
-  for _, file in pairs(files) do
-    if file:sub(-4) == ".lua" then
-      mainLogger:d("Config file changed: " .. file .. ", reloading...") -- Replaced debugLog
-      hs.reload()
-      hs.alert.show('Config Reloaded')
-      return
-    end
-  end
 end
 
 -- Safely load Spoons with error handling
@@ -67,13 +45,7 @@ safeCall("Configuring console", function()
   hs.console.clearConsole()
   hs.console.darkMode(true)
   hs.window.animationDuration = 0.0
-  hs.application.enableSpotlightForNameSearches(true)
-end)
-
-safeCall("Setting up config reload watcher", function()
-  local reloadConfigWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig)
-  mainLogger:d("Reloading after changes to ".. os.getenv("HOME") .. "/.hammerspoon/")
-  reloadConfigWatcher:start()
+  -- hs.application.enableSpotlightForNameSearches(true)
 end)
 
 -- -----------------------------------------------------------------------
@@ -87,11 +59,6 @@ if spoon == nil then
 end
 
 safeCall("Loading spoons", function()
-  
-  -- local jjkHotkeys = safeLoadSpoon("jjkHotkeys")
-  -- if jjkHotkeys then 
-  --   spoon.jjkHotkeys = jjkHotkeys 
-  -- end
 
   local clipFormatter = safeLoadSpoon("ClipboardFormatter")
   if clipFormatter then 
@@ -118,5 +85,3 @@ safeCall("Finalizing initialization", function()
   mainLogger:i("Hammerspoon configuration loaded successfully") -- Replaced debugLog, changed to info
   hs.alert.show("Hammerspoon configuration loaded")
 end)
-
--- require("rcmd")

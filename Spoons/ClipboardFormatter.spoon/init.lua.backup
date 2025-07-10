@@ -582,33 +582,33 @@ end
 
 function obj:detectInputType(content)
     local str = content:gsub("^%s+", ""):gsub("%s+$", "")
--- print("Detecting type for:", str)
+    print("Detecting type for:", str)
     
     -- Check for date range with hyphen without spaces e.g. "12/12/12-12/14/12"
     if str:match("^(%d+[/%.-]%d+[/%.-]%d+)%-(%d+[/%.-]%d+[/%.-]%d+)$") then
--- print("Matched date_range hyphen")
+        print("Matched date_range hyphen")
         return "date_range_to"
     end
     
     -- Test for currency calculation (e.g. $170.89/7)
     if str:match("^%$%d+%.?%d*/%d+$") then
--- print("Matched currency_calc")
+        print("Matched currency_calc")
         return "currency_calc"
     end
     
     -- Test for date range with "to" or "and"
     if str:match("^%d+[/%.-]%d+[/%.-]%d+%s*[%-toTOandANDthroughTHROUGHthruTHRU]+%s*%d+[/%.-]%d+[/%.-]%d+$") then
--- print("Matched date_range")
+        print("Matched date_range")
         return "date_range_to"
     end
     
     -- Test for simple arithmetic (e.g. 1+1, 1*1, etc.)
     if str:match("^%s*%$?%s*[%d%.]+([%+%-%*/][%d%.]+)+$") then
--- print("Matched arithmetic")
+        print("Matched arithmetic")
         return "arithmetic"
     end
     
--- print("No match found - unknown type")
+    print("No match found - unknown type")
     return "unknown"
 end
 
@@ -828,6 +828,12 @@ function obj:processClipboard(content)
     local hasLowerC = content:find('[cC]')
     local hasPD = content:lower():find('pd')
     
+    -- Check for hammerspoon logs (do this early to avoid other patterns)
+    if content:find('%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:') then
+        local strippedLogs = self:stripDateTimeStamps(content)
+        if strippedLogs then return strippedLogs end
+    end
+    
     -- Most common case - check for arithmetic expressions first
     if hasDollar or content:match("[%+%-%*/%(%)%.]") then
         if self:isArithmeticExpression(content) then
@@ -943,14 +949,14 @@ function obj:formatClipboard()
     -- Show appropriate message
     if handled then
         hs.alert.show(alertMessage)
--- print(string.format("Clipboard Formatter: %s - [%s]", alertMessage, (postFormatted or preFormatted)))
+        print(string.format("Clipboard Formatter: %s - [%s]", alertMessage, (postFormatted or preFormatted)))
     else
         local errorMessage = "No formattable content found"
         if not postClipboard and not preClipboard then
             errorMessage = "Clipboard is empty"
         end
         hs.alert.show(errorMessage)
--- print(string.format("Clipboard Formatter Error: %s", errorMessage))
+        print(string.format("Clipboard Formatter Error: %s", errorMessage))
     end
 end
 
@@ -1041,8 +1047,8 @@ function obj:performSelectionCopy()
     end
     
     -- Debug output
--- print("Original clipboard:", originalClipboard or "(empty)")
--- print("Selected text:", selectedText or "(empty)")
+    print("Original clipboard:", originalClipboard or "(empty)")
+    print("Selected text:", selectedText or "(empty)")
     
     -- Process the content if we got something new
     if selectedText and selectedText ~= "" and selectedText ~= originalClipboard then
@@ -1064,7 +1070,7 @@ function obj:performSelectionCopy()
             ]])
             
             hs.alert.show("Formatted selection: " .. formatted)
--- print("formatSelection produced result:", formatted)
+            print("formatSelection produced result:", formatted)
             return true
         else
             -- No changes needed, restore clipboard
@@ -1072,7 +1078,7 @@ function obj:performSelectionCopy()
                 hs.pasteboard.setContents(originalClipboard)
             end
             hs.alert.show("No formatting needed")
--- print("formatSelection: No changes made to content")
+            print("formatSelection: No changes made to content")
             return true
         end
     else
@@ -1081,7 +1087,7 @@ function obj:performSelectionCopy()
             hs.pasteboard.setContents(originalClipboard)
         end
         hs.alert.show("Could not get selected text")
--- print("formatSelection: Failed to retrieve selected text")
+        print("formatSelection: Failed to retrieve selected text")
         return false
     end
 end
@@ -1121,7 +1127,7 @@ function obj:formatClipboardDirect()
             -- Use clipboard for faster operation instead of keystrokes
             hs.pasteboard.setContents(formatted)
             hs.alert.show("Formatted clipboard")
--- print(string.format("Clipboard Formatter: Formatted clipboard - [%s]", formatted))
+            print(string.format("Clipboard Formatter: Formatted clipboard - [%s]", formatted))
             return
         end
     end
@@ -1136,7 +1142,7 @@ function obj:init()
     -- Make sure we have access to accessibility features for more reliable selection capture
     -- Fix: Use hs.accessibilityState() function call instead of treating it as a table
     if hs.accessibilityState and hs.accessibilityState() == false then
--- print("Warning: Accessibility features not enabled, formatSelection may be less reliable")
+        print("Warning: Accessibility features not enabled, formatSelection may be less reliable")
     end
     
     -- Precompile pattern matches for faster execution
@@ -1339,6 +1345,52 @@ function obj:splitWords(str)
         table.insert(words, current)
     end
     return words
+end
+
+function obj:stripDateTimeStamps(logContent)
+    -- Check if we actually have log content first
+    if not self:isHammerspoonLog(logContent) then
+        return nil
+    end
+    
+    -- Process line by line
+    local lines = self:splitLines(logContent)
+    local strippedLines = {}
+    
+    for _, line in ipairs(lines) do
+        -- Replace timestamp pattern at the beginning of each line with empty string
+        local strippedLine = line:gsub("^%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:%s*", "")
+        table.insert(strippedLines, strippedLine)
+    end
+    
+    -- Join lines back together
+    return table.concat(strippedLines, "\n")
+end
+
+function obj:isHammerspoonLog(content)
+    -- Check if the content looks like Hammerspoon logs (multiple lines with timestamp pattern)
+    local lines = self:splitLines(content)
+    if #lines < 2 then return false end
+    
+    -- Count how many lines match the log pattern
+    local logLineCount = 0
+    for _, line in ipairs(lines) do
+        -- Match pattern like "2025-03-09 08:53:00:" at the start of line
+        if line:match("^%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d:") then
+            logLineCount = logLineCount + 1
+        end
+    end
+    
+    -- If most lines (>50%) have this pattern, it's likely a log
+    return logLineCount >= (#lines / 2)
+end
+
+function obj:splitLines(str)
+    local lines = {}
+    for line in str:gmatch("([^\n]*)\n?") do
+        table.insert(lines, line)
+    end
+    return lines
 end
 
 return obj
