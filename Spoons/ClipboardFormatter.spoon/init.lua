@@ -24,25 +24,33 @@ function obj:init()
     return self
 end
 
+
 function obj:formatAsCurrency(number)
-    -- Round to 2 decimal places
-    local rounded = math.floor(number * 100 + 0.5) / 100
-    
-    -- Handle numbers less than 1000 (no commas needed)
+    local negative  = number < 0
+    local absNumber = math.abs(number)
+
+    -- Round to two decimals
+    local rounded = math.floor(absNumber * 100 + 0.5) / 100
+
+    -- Build the numeric part (no sign, no $ yet)
+    local numeric
     if rounded < 1000 then
-        return string.format("$%.2f", rounded)
+        numeric = string.format("%.2f", rounded)                 -- e.g. 999.50
+    else
+        local temp           = string.format("%.2f", rounded)    -- e.g. 14935.00
+        local whole, decimal = temp:match("(%d+)(%.%d+)")
+        local withCommas     = whole:reverse()
+                                     :gsub("(%d%d%d)", "%1,")
+                                     :reverse()
+                                     :gsub("^,", "")
+        numeric = withCommas .. decimal                          -- e.g. 14,935.00
     end
-    
-    -- Format with commas for larger numbers
-    local formatted = string.format("$%.2f", rounded)
-    local whole, decimal = formatted:match("(%$%d+)(.%d+)")
-    if whole then
-        -- Remove the dollar sign before adding commas
-        local withoutDollar = whole:sub(2)
-        local withCommas = withoutDollar:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
-        return "$" .. withCommas .. decimal
+
+    if negative then
+        return "-$" .. numeric
+    else
+        return  "$" .. numeric
     end
-    return formatted
 end
 
 function obj:tokenizeExpression(equation)
@@ -216,9 +224,12 @@ function obj:formatNumberWithCommas(num, isCurrency)
 end
 
 function obj:isArithmeticExpression(content)
-    -- Remove all '$' signs and whitespace
-    local cleaned = content:gsub("%$", ""):gsub("%s+", "")
-    
+    -- Remove $, commas, and whitespace
+    local cleaned = content
+        :gsub("[–—−]", "-")   -- normalise to ASCII minus
+        :gsub("[%$,]", "")    -- strip $ and commas
+        :gsub("%s+", "")      -- strip spaces
+
     -- Exclude potential date patterns
     if cleaned:match("^%d%d?[/.%-]%d%d?[/.%-]%d%d%d?%d?$") or
        cleaned:match("^%d%d?[/.%-]%d%d?[/.%-]%d%d$") then
@@ -532,8 +543,12 @@ end
 
 function obj:processArithmeticExpression(content)
     local hasCurrencyFlag = content:find("%$") ~= nil
-    local cleaned = content:gsub("%$", ""):gsub("%s+", "")
-    
+    -- Strip $, commas, and spaces before any further work
+    local cleaned = content
+                  :gsub("[–—−]", "-")   -- normalise to ASCII minus
+                  :gsub("[%$,]", "")    -- strip $ and commas
+                  :gsub("%s+", "")      -- strip spaces
+
     -- Use evaluateEquation for complex expressions with parentheses
     if cleaned:match("[%(%)]") then
         local result = self:evaluateEquation(cleaned)
