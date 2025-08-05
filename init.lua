@@ -77,6 +77,8 @@ safeCall("Loading spoons", function()
 
 end)
 
+safeCall("Loading cleanshot script", function() require('cleanshot') end)
+
 -- -----------------------------------------------------------------------
 -- FINALIZATION
 -- -----------------------------------------------------------------------
