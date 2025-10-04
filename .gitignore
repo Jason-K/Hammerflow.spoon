@@ -1,2 +1,31 @@
-*.toml
-!sample.toml
+# Hammerspoon gitignore
+
+# IDE files
+.vscode/
+hammerspoon.code-workspace
+
+# Temporary files
+.DS_Store
+Thumbs.db
+
+# Private config
+private/
+.secrets.json
+
+# Downloaded Spoons that can be reinstalled
+# Uncomment if you want to exclude Spoons from version control
+# Spoons/
+
+# Notes 
+# HammerspoonNotes.ini
+
+# EmmyLua annotations
+**/Spoons/EmmyLua.spoon/annotations/**
+
+# log files
+/logs/
+**/logs/**
+errors.log
+log.txt
+hslogger.log
+hslogger.log.*
