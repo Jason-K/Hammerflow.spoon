@@ -7,6 +7,7 @@ hsLauncher is a Hammerspoon-first automation layer that facilitates user access 
 ## Status & Recent Work (2025-10-03)
 
 - **Menu builder feature flag:** `main/user/config.lua` now exposes `featureFlags.menuBuilder` (and `HSLAUNCHER_MENU_BUILDER`) so you can toggle the declarative menu pipeline while keeping legacy `userActions.lua` online during rollout.
+- **Declarative runtime gating:** `featureFlags.declarativeRuntime` (or `HSLAUNCHER_DECLARATIVE_RUNTIME`) switches `main/init.lua` between the new `main/runtime` stack and the legacy hyper modal, falling back automatically if the declarative startup reports an error.
 - **Aggregated diagnostics:** `main/user/registry.lua` merges loader + builder diagnostics into a single `[config]` channel and backfills legacy actions when the feature flag is off, keeping the runtime usable even if declarative validation fails.
 - **Config loader merges external hotkeys:** `main/core/config_loader.lua` now ingests both `main/user/actions.lua` and the new `main/user/external_hotkeys.lua`, reusing validation so duplicate detection and diagnostics span all sources before returning a unified action index.
 - **External hotkey stub & routing:** `main/user/external_hotkeys.lua` ships as an append-only action list for assignment tooling; loader tagging enables immediate menu exposure once menus adopt the `externalHotkeys.*` structure.
@@ -47,6 +48,7 @@ hsLauncher is a Hammerspoon-first automation layer that facilitates user access 
 - When the flag is disabled, the registry automatically registers legacy actions and builds leader menus from `userActions.lua`; when enabled, it consumes the loader + `menu_builder` output instead.
 - Loader and builder diagnostics now emit through a shared `[config]` channel; check `logs/log.txt` for both schema errors and menu warnings.
 - Menu builder reports duplicate and self-referential submenu definitions (`menu.subMenus.duplicate`, `menu.subMenus.self`) to help harden nested layouts before switching the flag on.
+- Enable `featureFlags.declarativeRuntime` (or set `HSLAUNCHER_DECLARATIVE_RUNTIME=1`) to boot the declarative runtime. Startup will fall back to the legacy hyper stack—and emit a warning—if the new runtime returns an error so day-to-day usage stays stable during rollout.
 
 ## Project Layout
 

@@ -110,8 +110,8 @@ During transition we can stage files in `runtime/` while keeping `hyper_modal` l
 
 - [x] Implement menu presentation based on `menu_builder` output (likely new lightweight UI instead of `modal_gui`).
 - [x] Rebuild leader sequencing with declarative metadata (replacing `leader_buffer` and `mode_spec`). Initial pass lives in `main/runtime/menu/sequences.lua` with coverage in `tests/test_menu_sequences.lua`.
-- [ ] Introduce runtime feature flag (`featureFlags.declarativeRuntime` + `HSLAUNCHER_DECLARATIVE_RUNTIME`) to toggle between legacy and new implementation.
-- [ ] When flag enabled, ensure `main/init.lua` uses the new runtime path; run regression tests and manual smoke.
+- [x] Introduce runtime feature flag (`featureFlags.declarativeRuntime` + `HSLAUNCHER_DECLARATIVE_RUNTIME`) to toggle between legacy and new implementation.
+- [x] When flag enabled, ensure `main/init.lua` uses the new runtime path; run regression tests and manual smoke. Fallback to legacy path when declarative startup reports an error so the spoon remains usable while stabilizing the new runtime.
 
 ### Phase 4 – Archive legacy stack
 

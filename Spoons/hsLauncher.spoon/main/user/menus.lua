@@ -21,6 +21,7 @@ return {
 	{
 		title = 'leaderWindow',
 		description = 'Window Management',
+		defaultShortcut = 'w',
 		policy = {
 			autoPopulateFromActions = false,
 		},
@@ -28,6 +29,7 @@ return {
 	{
 		title = 'leaderHotkeys',
 		description = 'Hotkey Management',
+		defaultShortcut = 'h',
 		policy = {
 			autoPopulateFromActions = false,
 		},
@@ -35,6 +37,7 @@ return {
 	{
 		title = 'leaderShortcuts',
 		description = 'Shortcuts',
+		defaultShortcut = 's',
 		policy = {
 			autoPopulateFromActions = false,
 		},

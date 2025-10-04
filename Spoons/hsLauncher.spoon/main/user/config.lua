@@ -4,6 +4,7 @@
 return {
 	featureFlags = {
 		menuBuilder = false,
+		declarativeRuntime = true,
 	},
 	menus = {
 		'applications',
