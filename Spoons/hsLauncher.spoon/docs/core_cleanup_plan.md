@@ -76,7 +76,7 @@ These files interdepend heavily and still power the live runtime via `main/init.
 
 ## Target Layout Proposal
 
-```
+```text
 main/
   core/            # Declarative loader, menu builder, shared libs, action runner
   runtime/         # New declarative runtime (hotkey engine, modal presenter, leader integration)
@@ -91,7 +91,7 @@ During transition we can stage files in `runtime/` while keeping `hyper_modal` l
 ### Phase 0 – Baseline & guardrails
 
 - [x] Add a `docs/architecture.md` section (or expand this plan) describing desired runtime layering.
-- [ ] Ensure existing tests (`test_config_loader.lua`, `test_menu_builder.lua`, `test_leader_registry.lua`) run clean; add CI gate if missing.
+- [x] Ensure existing tests (`test_config_loader.lua`, `test_menu_builder.lua`, `test_leader_registry.lua`) run clean; add CI gate if missing.
 - [x] Capture runtime smoke checklist (hyper tap, leader menus, window actions) for regression testing.
 
 ### Phase 1 – Quick hygiene wins
@@ -104,11 +104,11 @@ During transition we can stage files in `runtime/` while keeping `hyper_modal` l
 
 - [x] Design a declarative hotkey engine that consumes loader output (align with Phase 3 roadmap in `HANDOFF.md`) — initial `runtime/action_factory.lua` and `runtime/hyper/hotkey_resolver.lua` scaffolding landed.
 - [x] Prototype new modules under `main/runtime/hyper/` (e.g., `dispatcher.lua`, `registrar.lua`, `ui.lua`).
-- [ ] Update `tests/` to cover the new runtime pieces (unit tests for dispatcher, integration tests for loader → runtime wiring).
+- [x] Update `tests/` to cover the new runtime pieces (unit tests for dispatcher, integration tests for loader → runtime wiring).
 
 ### Phase 3 – Feature parity + flag-driven swap
 
-- [ ] Implement menu presentation based on `menu_builder` output (likely new lightweight UI instead of `modal_gui`).
+- [x] Implement menu presentation based on `menu_builder` output (likely new lightweight UI instead of `modal_gui`).
 - [ ] Rebuild leader sequencing with declarative metadata (replacing `leader_buffer` and `mode_spec`).
 - [ ] Introduce runtime feature flag (`featureFlags.declarativeRuntime` + `HSLAUNCHER_DECLARATIVE_RUNTIME`) to toggle between legacy and new implementation.
 - [ ] When flag enabled, ensure `main/init.lua` uses the new runtime path; run regression tests and manual smoke.
