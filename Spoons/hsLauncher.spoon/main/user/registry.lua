@@ -1,4 +1,8 @@
 local logger = require('hsLauncher.main.core.logger')
+local noop = function(...) end
+local logInfo = logger.info or noop
+local logWarn = logger.warn or logInfo
+local logError = logger.error or logWarn
 local Actions = require('hsLauncher.main.core.actions')
 local Diagnostics = require('hsLauncher.main.core.diagnostics')
 
@@ -86,7 +90,7 @@ local function loadLegacyUserActions(silent)
 	if legacyModule ~= nil then return legacyModule end
 	if legacyLoadErr ~= nil then
 		if not silent then
-			logger.error('user.registry: legacy userActions previously failed to load -> ' .. tostring(legacyLoadErr))
+			logError('user.registry: legacy userActions previously failed to load -> ' .. tostring(legacyLoadErr))
 		end
 		return nil
 	end
@@ -94,7 +98,7 @@ local function loadLegacyUserActions(silent)
 	if not ok then
 		legacyLoadErr = mod
 		if not silent then
-			logger.error('user.registry: unable to load legacy userActions -> ' .. tostring(mod))
+			logError('user.registry: unable to load legacy userActions -> ' .. tostring(mod))
 		end
 		return nil
 	end
@@ -162,11 +166,11 @@ end
 local function loadUserConfig()
 	local ok, cfg = pcall(require, 'hsLauncher.main.user.config')
 	if not ok then
-		logger.error('user.registry: unable to load user config -> ' .. tostring(cfg))
+		logError('user.registry: unable to load user config -> ' .. tostring(cfg))
 		return {}
 	end
 	if type(cfg) ~= 'table' then
-		logger.error('user.registry: user config must return a table')
+		logError('user.registry: user config must return a table')
 		return {}
 	end
 	return cfg
@@ -181,7 +185,7 @@ local function compileActionSpec(action)
 		elseif stepType == 'function' then
 			steps[#steps + 1] = Actions.call(step)
 		elseif stepType == 'string' then
-			logger.error(string.format('user.registry: action %s uses unsupported string step - convert to descriptor table', action.name))
+			logError(string.format('user.registry: action %s uses unsupported string step - convert to descriptor table', action.name))
 		end
 	end
 	if #steps == 0 then return Actions.noop() end
@@ -242,7 +246,7 @@ local function registerLegacyActions()
 	if not legacy then return end
 	local ok, legacyActions = pcall(legacy.actions)
 	if not ok then
-		logger.warn('user.registry: unable to read legacy actions -> ' .. tostring(legacyActions))
+		logWarn('user.registry: unable to read legacy actions -> ' .. tostring(legacyActions))
 		return
 	end
 	if type(legacyActions) ~= 'table' then return end
@@ -299,7 +303,7 @@ local function buildActionEntryFromMenuItem(item, section)
 	if not entry or entry.enabled == false then return nil end
 	local key = normalizeShortcut(item, entry.label)
 	if not key or key == '' then
-		logger.warn(string.format('user.registry: menu %s action %s missing shortcut', tostring(item.menuId or 'root'), tostring(item.id)))
+		logWarn(string.format('user.registry: menu %s action %s missing shortcut', tostring(item.menuId or 'root'), tostring(item.id)))
 		return nil
 	end
 	local exitAfter = true
@@ -383,16 +387,16 @@ local function buildLegacyActionEntry(legacy, actionId, entry, defaultSection, m
 	if not legacy or type(legacy.resolve) ~= 'function' then return nil end
 	local ok, spec = pcall(legacy.resolve, actionId)
 	if not ok then
-		logger.warn(string.format('user.registry: legacy action %s failed to resolve -> %s', tostring(actionId), tostring(spec)))
+		logWarn(string.format('user.registry: legacy action %s failed to resolve -> %s', tostring(actionId), tostring(spec)))
 		return nil
 	end
 	if spec == nil then
-		logger.warn(string.format('user.registry: legacy action %s missing spec', tostring(actionId)))
+		logWarn(string.format('user.registry: legacy action %s missing spec', tostring(actionId)))
 		return nil
 	end
 	local actionSpec = extractLegacyActionSpec(spec)
 	if not actionSpec then
-		logger.warn(string.format('user.registry: legacy action %s missing action descriptor', tostring(actionId)))
+		logWarn(string.format('user.registry: legacy action %s missing action descriptor', tostring(actionId)))
 		return nil
 	end
 	local label = entry.label or spec.label or spec.description or actionId
@@ -566,7 +570,7 @@ local function buildLeaderConfigFromLegacy()
 			local entries = buildLegacyLeaderEntries(legacy, ctx, name)
 			for _, entry in ipairs(entries) do actions[#actions + 1] = entry end
 		else
-			logger.warn(string.format('user.registry: unable to load legacy context %s -> %s', tostring(name), tostring(ctx)))
+			logWarn(string.format('user.registry: unable to load legacy context %s -> %s', tostring(name), tostring(ctx)))
 		end
 	end
 	sortEntries(actions)

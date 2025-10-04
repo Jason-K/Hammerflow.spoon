@@ -1,6 +1,6 @@
-local ACTIONS_MODULE = 'main.user.actions'
-local EXTERNAL_ACTIONS_MODULE = 'main.user.external_hotkeys'
-local MENUS_MODULE = 'main.user.menus'
+local ACTIONS_MODULE = 'hsLauncher.main.user.actions'
+local EXTERNAL_ACTIONS_MODULE = 'hsLauncher.main.user.external_hotkeys'
+local MENUS_MODULE = 'hsLauncher.main.user.menus'
 
 local ConfigLoader = {}
 

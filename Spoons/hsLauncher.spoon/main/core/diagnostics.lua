@@ -2,6 +2,11 @@ local logger = require('hsLauncher.main.core.logger')
 
 local Diagnostics = {}
 
+local function callLogger(primary, fallback, line)
+	local handler = primary or fallback or function() end
+	handler(line)
+end
+
 local function stringifyContext(context)
 	if type(context) ~= 'table' then return nil end
 	local entries = {}
@@ -26,11 +31,11 @@ local function logEntries(level, prefix, entries)
 		end
 		local line = string.format('%s %s', prefix, message)
 		if level == 'error' then
-			logger.error(line)
+			callLogger(logger.error, logger.info, line)
 		elseif level == 'warn' then
-			logger.warn(line)
+			callLogger(logger.warn, logger.info, line)
 		else
-			logger.info(line)
+			callLogger(logger.info, nil, line)
 		end
 	end
 end
@@ -50,7 +55,7 @@ local function logConflicts(prefix, conflicts)
 		if context ~= '' then
 			line = string.format('%s (%s)', line, context)
 		end
-		logger.warn(line)
+		callLogger(logger.warn, logger.info, line)
 	end
 end
 
