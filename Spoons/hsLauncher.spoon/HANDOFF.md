@@ -263,6 +263,7 @@ lua tests/test_leader_registry.lua    # leader root assembly and menu contributi
 ```
 
 `tests/test_leader_registry.lua` now depends on the declarative seed actions (Brave launcher + leader mode entries); re-run it after each migration batch to confirm loader output stays consistent.
+`tests/test_startup_failure.lua` anchors the startup diagnostics contract described in `docs/architecture.md`, reinforced by `docs/declarative_parity_plan.md`, and tracked as a guardrail in `docs/core_cleanup_plan.md`; review those references before touching registry or loader boot paths.
 
 Manual smoke checklist:
 
@@ -310,6 +311,16 @@ Follow-up: Begin Phase 2 by designing the menu generator pipeline, enumerating r
 - Continue porting legacy actions from `main/backup/user/userActions.lua` into the declarative files (`main/user/actions.lua` & `main/user/menus.lua`), targeting the Filesystem context next (folders/files/workspaces).
 - As each batch migrates, remove the corresponding contexts from `userActions.lua`, update hotkey specs, and expand loader/leader tests to cover the new declarative entries.
 - Populate `main/user/menus.lua` with the planned `externalHotkeys` tree (global + per-app buckets) and tag filters so loader-merged actions become visible immediately after assignment.
+
+## Downstream Tooling Outreach Plan
+
+- **Inventory consumers:** Collect the list of automation clients (internal scripts, CLI tooling, external partners) that historically required `hsLauncher.main.core.hyper_*` imports; capture owners and preferred contact channels.
+- **Code scan:** Run `rg "main\.core\.hyper_"` across downstream repos to surface lingering dependencies and share the results with each owner alongside the planned removal timeline.
+- **Message template:** Send an announcement that menu builder will become the default and hyper shims are scheduled for removal; include pointers to the declarative startup troubleshooting section and `tests/test_startup_failure.lua` so teams can self-verify.
+- **Response log:** Record confirmations, blockers, and migration timelines in the project tracker or the next handoff update; highlight any teams needing support.
+- **Follow-up checkpoint:** Schedule a review once responses land to verify no production tooling still imports the archived modules before deleting the shims.
+- **Artifacts:** Outreach templates now live in `docs/downstream_outreach.md` (inventory table, scan commands, announcement copy, response log).
+- **Local scan:** `rg "hsLauncher.main.core.hyper_" --glob "*.lua"` in this repo only surfaced the expected shim references (`main/core/actions.lua`, `main/core/leader_config.lua`, `main/modules/hotkeys/global_shortcuts.lua`) plus test preloads, confirming no new dependencies.
 
 ## 12. Session Notes — 2025-10-02 @ 21:05 PT
 

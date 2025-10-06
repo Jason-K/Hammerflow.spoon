@@ -50,7 +50,6 @@ hsLauncher/
 
 - Be cautious with terminal commands. Before every terminal command, consider carefully whether it can be expected to exit on its own, or if it will run indefinitely (e.g. launching a web server). For processes that run indefinitely, always launch them in a new process (e.g. nohup). Similarly, if you have a script to do something, make sure the script has similar protections against running indefinitely before you run it.
 
-
 ---
 
 ## 3. Naming Conventions
@@ -65,6 +64,6 @@ hsLauncher/
 - Update HANDOFF.md at the start of a phase, identifying the upcoming task, the files to be added/removed/edited, and the purpose of the changes.
 - Update HANDOFF.md at the end of a phase or upon successful implementation of a feature, identifying the task completed, files added/removed/edited, and the reason for the changes.
 - Update HANDOFF.md before the end of a session, documenting new features and incomplete or upcoming tasks or project goals. 
-- Update README.md whenever you begin adding a new feature or module (marking it as 'IMPLEMENTING', and when you complete adding the new feature ('COMPLETE')
+- Update README.md whenever you begin adding a new feature or module (marking it as 'IMPLEMENTING'), and when you complete adding the new feature ('COMPLETE')
 
 ---

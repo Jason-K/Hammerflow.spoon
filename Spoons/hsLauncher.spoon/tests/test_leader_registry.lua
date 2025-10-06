@@ -56,6 +56,9 @@ if not package.preload['hs.fs'] then
       touch = function()
         return true
       end,
+      pathToAbsolute = function(path)
+        return path
+      end,
       dir = function()
         return function()
           return nil
@@ -64,6 +67,8 @@ if not package.preload['hs.fs'] then
     }
   end
 end
+
+require('tests.fixtures.legacy_user_actions').install()
 
 if not _G.hs then _G.hs = {} end
 hs.execute = hs.execute or function()
@@ -225,7 +230,15 @@ assertEquals(registeredSequences[1], 'space', 'root sequence should be space')
 
 print('[PASS] Leader registry builds config and registers modes')
 
-local legacyState = Registry.load({ featureFlags = { menuBuilder = false } })
+local legacyState = Registry.load({
+  featureFlags = { menuBuilder = false },
+  menus = {
+    'hotkey_management',
+    'shortcuts',
+    'text_tools',
+    'window_management',
+  },
+})
 assertTrue(legacyState.features.menuBuilder == false, 'legacy load should disable menu builder')
 local legacyConfig = Registry.buildLeaderConfig()
 assertTrue(type(legacyConfig.actions) == 'table', 'legacy leader config should return actions table')

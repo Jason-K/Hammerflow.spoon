@@ -4,14 +4,14 @@ hsLauncher is a Hammerspoon-first automation layer that facilitates user access 
 
 ---
 
-## Status & Recent Work (2025-10-03)
+## Status & Recent Work (2025-10-06)
 
-- **Menu builder feature flag:** `main/user/config.lua` now exposes `featureFlags.menuBuilder` (and `HSLAUNCHER_MENU_BUILDER`) so you can toggle the declarative menu pipeline while keeping legacy `userActions.lua` online during rollout.
-- **Declarative runtime gating:** `featureFlags.declarativeRuntime` (or `HSLAUNCHER_DECLARATIVE_RUNTIME`) switches `main/init.lua` between the new `main/runtime` stack and the legacy hyper modal, falling back automatically if the declarative startup reports an error.
-- **Aggregated diagnostics:** `main/user/registry.lua` merges loader + builder diagnostics into a single `[config]` channel and backfills legacy actions when the feature flag is off, keeping the runtime usable even if declarative validation fails.
-- **Config loader merges external hotkeys:** `main/core/config_loader.lua` now ingests both `main/user/actions.lua` and the new `main/user/external_hotkeys.lua`, reusing validation so duplicate detection and diagnostics span all sources before returning a unified action index.
+- **Declarative runtime default:** `main/init.lua` now boots the declarative runtime exclusively; the legacy hyper stack remains archived under `main/backup/core/` for historical reference.
+- **Menu builder feature flag:** `main/user/config.lua` still exposes `featureFlags.menuBuilder` (and `HSLAUNCHER_MENU_BUILDER`) so you can toggle the declarative menu pipeline while legacy `userActions.lua` stays available during rollout.
+- **Aggregated diagnostics:** `main/user/registry.lua` merges loader + builder diagnostics into a single `[config]` channel and backfills legacy actions when the menu builder flag is off, keeping the runtime usable even if declarative validation fails.
+- **Config loader merges external hotkeys:** `main/core/config_loader.lua` ingests both `main/user/actions.lua` and the new `main/user/external_hotkeys.lua`, reusing validation so duplicate detection and diagnostics span all sources before returning a unified action index.
 - **External hotkey stub & routing:** `main/user/external_hotkeys.lua` ships as an append-only action list for assignment tooling; loader tagging enables immediate menu exposure once menus adopt the `externalHotkeys.*` structure.
-- **Bootstrap requires-ready:** Spoon `init.lua` now ensures `package.path` and module loader registration during `require`, so utilities can load hsLauncher modules without waiting for `start()`.
+- **Bootstrap requires-ready:** Spoon `init.lua` ensures `package.path` and module loader registration during `require`, so utilities can load hsLauncher modules without waiting for `start()`.
 - **Phase 2 implementing:** `main/core/menu_builder.lua` still provides shortcut resolution, tag-based population, and numeric fallback conflicts with coverage in `tests/test_menu_builder.lua`.
 - **Leader registry & modules steady:** `main/user/userActions.lua`, registry, and module refresh work from 10-02 remain the runtime surface while the menu generator wiring proceeds.
 
@@ -48,14 +48,15 @@ hsLauncher is a Hammerspoon-first automation layer that facilitates user access 
 - When the flag is disabled, the registry automatically registers legacy actions and builds leader menus from `userActions.lua`; when enabled, it consumes the loader + `menu_builder` output instead.
 - Loader and builder diagnostics now emit through a shared `[config]` channel; check `logs/log.txt` for both schema errors and menu warnings.
 - Menu builder reports duplicate and self-referential submenu definitions (`menu.subMenus.duplicate`, `menu.subMenus.self`) to help harden nested layouts before switching the flag on.
-- Enable `featureFlags.declarativeRuntime` (or set `HSLAUNCHER_DECLARATIVE_RUNTIME=1`) to boot the declarative runtime. Startup will fall back to the legacy hyper stack—and emit a warning—if the new runtime returns an error so day-to-day usage stays stable during rollout.
+- Declarative runtime now runs by default; the legacy hyper stack is archived under `main/backup/core/` for reference if you need to inspect historical behavior.
 
 ## Project Layout
 
 | Path | Purpose |
 | --- | --- |
-| `main/init.lua` | Startup orchestration (Hyper engine, registry, logging, diagnostic wiring). |
-| `main/core/` | Canonical subsystems: actions runner, window stack, modal GUI, input engine, logger, etc. |
+| `main/init.lua` | Startup orchestration for the declarative runtime (registry load, logging, diagnostic wiring). |
+| `main/core/` | Canonical subsystems: actions runner, window stack, logger, diagnostics, plus thin shims to legacy hyper modules now archived under `main/backup/core/`. |
+| `main/backup/core/` | Archived legacy hyper/leader runtime, modal GUI, and supporting helpers retained for reference while the declarative runtime rolls out. |
 | `main/core/config_loader.lua` | Phase 1 loader that ingests `main/user/actions.lua` / `menus.lua`, performs schema validation, and returns diagnostics. |
 | `main/modules/hotkeys/` | Hotkey primitives shared by assigners, CLI tooling, and manifest collection. |
 | `main/user/userActions.lua` | Transitional source of truth for leader modules, hotkey contexts, and user-defined actions. |
@@ -159,8 +160,12 @@ Interactive assignments (`Actions.assignGlobal`, Hyper → `h` `g`) now capture 
   lua tests/test_actions.lua
   lua tests/test_leader_registry.lua
   lua tests/test_hotkey_manifest.lua
+      lua tests/test_startup_failure.lua
   hs -c "require('tests.run')"
+   lua -l tests.run
   ```
+
+- The startup regression (`tests/test_startup_failure.lua`) ensures `hsLauncher.start()` surfaces loader and menu-builder failures instead of silently falling back, so keep it green when touching registry or runtime boot code. The failure expectations are documented in `docs/architecture.md`, reinforced in `docs/declarative_parity_plan.md`, and tracked in `docs/core_cleanup_plan.md` as a guardrail for future bootstrap work.
 
 - Generate a manifest catalog after changing bindings:
 
@@ -170,6 +175,17 @@ Interactive assignments (`Actions.assignGlobal`, Hyper → `h` `g`) now capture 
 
 - Use `logs/log.txt` for action runner output, modal lifecycle traces, and registry changes. Promote structured logging via `core/logger.lua` when adding new modules.
 
+### Troubleshooting Declarative Startup
+
+- Declarative startup is the default path: `hsLauncher.start()` aborts if the loader or menu builder reports `ok = false`. The regression test `tests/test_startup_failure.lua` captures the contract and mirrors the guidance in `docs/architecture.md`, `docs/declarative_parity_plan.md`, and `docs/core_cleanup_plan.md`.
+- Expect an `[info] hsLauncher start` entry before any failure plus an `[error] config loader did not complete successfully` or `[error] menu builder did not complete successfully` line when startup stops; both land in `logs/log.txt` under the `[core]` channel.
+- Common diagnostics:
+   - `[config] loader.actions.missingFile` – `main/user/actions.lua`, `menus.lua`, or `external_hotkeys.lua` was not found or returned nil; ensure each file returns a table.
+   - `[config] loader.validation.schema` – action or menu schema violation; rerun `lua tests/test_config_loader.lua` for details.
+   - `[config] menuBuilder.shortcuts.conflict` – shortcut collision unresolved after fallback; adjust `menuDetails` overrides or tags.
+   - `[runtime] registry.declarativeUnavailable` – registry returned nil declarative state; confirm `main/user/registry.lua` completes the declarative branch.
+- After addressing the diagnostics, rerun the targeted unit test plus `lua tests/test_startup_failure.lua` to confirm the failure mode stays covered before reloading Hammerspoon.
+
 ---
 
 ## Additional Resources
@@ -178,5 +194,6 @@ Interactive assignments (`Actions.assignGlobal`, Hyper → `h` `g`) now capture 
 - `HANDOFF.md` – current project status, roadmap checkpoints, and next steps.
 - `docs/snippets/agentTemplate.lua` – canonical agent template (with matching spec in `tests/agentTemplate_spec.lua`).
 - `docs/hotkey_manifest_catalog.md` – generated manifest snapshot (refresh via CLI above).
+- `docs/downstream_outreach.md` – templates for inventorying consumers, scanning repos, and tracking responses before removing hyper shims.
 
 Contributions should preserve declarative specs, keep core modules pure, and route all bindings through the manifest to maintain auditability.

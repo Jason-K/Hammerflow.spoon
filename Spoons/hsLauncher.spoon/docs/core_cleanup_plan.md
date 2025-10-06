@@ -115,9 +115,11 @@ During transition we can stage files in `runtime/` while keeping `hyper_modal` l
 
 ### Phase 4 – Archive legacy stack
 
-- [ ] Move `hyper_modal.lua`, `input_engine.lua`, `leader_buffer.lua`, `indicator.lua`, `exit_keys.lua`, `mode_spec.lua`, `modal_gui.lua`, `modal_layouts.lua`, and `modal_inspector.lua` into `main/backup/core/`.
-- [ ] Update `README`/`HANDOFF` to reference the archival location and new runtime modules.
-- [ ] Remove feature flag fallback once the new runtime stabilizes.
+- [x] Move `hyper_modal.lua`, `input_engine.lua`, `leader_buffer.lua`, `indicator.lua`, `exit_keys.lua`, `mode_spec.lua`, `modal_gui.lua`, `modal_layouts.lua`, and `modal_inspector.lua` into `main/backup/core/`.
+- [x] Update `README`/`HANDOFF` to reference the archival location and new runtime modules.
+- [x] Audit the codebase for direct `hsLauncher.main.core.*` imports; only the shim-aware modules (`main/init.lua`, `main/core/leader_config.lua`, `main/core/actions.lua`, `main/modules/hotkeys/global_shortcuts.lua`) reference the legacy namespace.
+- [x] Finalize declarative runtime parity plan and verification checklist prior to removing feature flags (`docs/declarative_parity_plan.md`).
+- [x] Remove feature flag fallback once the new runtime stabilizes (2025-10-06).
 
 ### Phase 5 – Clean-up and documentation
 
@@ -134,11 +136,41 @@ During transition we can stage files in `runtime/` while keeping `hyper_modal` l
 | Hidden dependencies on legacy modules (e.g., direct `require` in personal scripts) | Breakage outside repo              | Search repo for stray requires, document breaking changes, optionally supply shims               |
 | Time sink reimplementing UI                                                        | Slows migration                    | Scope MVP UI (text-based palette or simple chooser) before feature parity polish                 |
 
+## Status Update – 2025-10-04
+
+- `tests/test_declarative_runtime.lua` now executes cleanly under plain Lua and when invoked via the suite runner.
+- `lua -l tests.run` currently fails because the legacy leader registry path returns zero actions once other specs finish; the shared `package.preload` state needs a deterministic legacy fixture to keep `Registry.buildLeaderConfig()` populated when `featureFlags.menuBuilder` is false.
+- Before advancing the cleanup, stabilize that test by introducing a dedicated `hsLauncher.main.user.userActions` stub or resetting test harness state between specs.
+- Documented findings back in this plan so Phase 4 work includes repairing cross-test contamination prior to removing the legacy loader fallback.
+
 ## Immediate Next Steps
 
-1. Stand up `main/backup/core/` and relocate unused modules (`sequence_runner.lua`, `shortcuts_modal.lua`).
-2. Replace alias modules (`assign_*`, `combo_utils`, `global_shortcuts`) with direct requires to reduce surface area.
-3. Draft the runtime architecture doc describing desired declarative hotkey/leader flow (inputs, outputs, state, UI expectations).
-4. Review the "pre-declarative" branch to confirm there are no additional legacy dependencies hiding elsewhere before files move.
+1. Update onboarding docs with a troubleshooting section that explains declarative runtime startup expectations and how to inspect archived legacy modules when debugging regressions.
+2. ✅ `tests/test_startup_failure.lua` now locks in the failed-start diagnostics documented in `docs/architecture.md` and mirrored through `docs/declarative_parity_plan.md`; expand coverage if additional runtime failure modes surface so the cleanup roadmap keeps the same guardrails.
+3. Audit remaining menu-builder feature flag usage and draft the migration checklist for flipping it on by default.
+4. Coordinate with tooling consumers to confirm no external scripts still import the archived hyper modules directly before removing the shims in a later phase.
 
 Tracking these items centrally (e.g., project board or issue list) will keep the migration focused and prevent regression gaps.
+
+## Menu Builder Feature Flag Audit
+
+- Configuration surface: `main/user/config.lua` exposes `featureFlags.menuBuilder` (default `false`) and honors the `HSLAUNCHER_MENU_BUILDER` environment override; both flow through `main/user/registry.lua` via `isFeatureEnabled`.
+- Registry gating: `main/user/registry.lua` stores the flag on `state.features.menuBuilder`, conditionally runs `core/menu_builder.lua`, and falls back to legacy `userActions.lua` when disabled.
+- Test harness: `tests/test_leader_registry.lua` pins the flag `true` for declarative assertions, `tests/test_menu_builder.lua` exercises `core/menu_builder.lua` explicitly, and no other specs depend on the legacy default.
+- Documentation touchpoints: README, `HANDOFF.md`, `docs/architecture.md`, and this plan still frame the flag as optional; update each doc when the default flips.
+
+### Rollout Checklist — Make Menu Builder Default
+
+1. Set `featureFlags.menuBuilder` to `true` in `main/user/config.lua`, keep the env override for temporary opt-outs, and update runtime logs to mark the legacy path deprecated.
+2. Refresh docs (`README.md`, `HANDOFF.md`, `docs/architecture.md`, `docs/declarative_parity_plan.md`) to describe declarative menus as the default and clarify the short-term opt-out story.
+3. Run the full Lua test suite plus manual menu smoke with the flag enabled; add or update tests that assumed the legacy default to avoid false positives.
+4. Coordinate with downstream tooling users to confirm they are ready for declarative menu manifests; capture responses in the next handoff entry before removing the opt-out.
+5. After stabilization, schedule removal of the feature flag (delete config/env toggles, drop legacy menu bridge) once external consumers confirm they no longer depend on the fallback.
+
+## Status Update – 2025-10-06
+
+- Declarative runtime fallback removed: `main/init.lua` now returns an error when startup fails instead of silently reverting to the legacy hyper stack.
+- `main/user/config.lua`, `README.md`, and supporting docs no longer reference `featureFlags.declarativeRuntime`; the plan documents Phase 4 as complete.
+- `tests/test_declarative_runtime.lua` reflects the new default and the full suite passes via `lua -l tests.run`.
+- Added `tests/test_startup_failure.lua` so future registry/runtime edits keep surfacing loader/menu-builder failures during startup.
+- Follow-up tasks now focus on documenting troubleshooting guidance, hardening runtime failure coverage, and preparing for the menu builder flag migration.

@@ -118,6 +118,161 @@ return {
 		},
 	},
 	{
+		title = 'lkCollections',
+		description = 'Leaderkey Collections',
+		memberRoot = true,
+		defaultShortcut = 'l',
+		subMenus = {
+			'lkDefault',
+			'lkRectangle',
+			'lkMiscScripts',
+			'lkBenefitRates',
+			'lkCaseChangers',
+			'lkDateScripts',
+			'lkMarkdown',
+			'lkMarkdownLists',
+			'lkMarkdownHeadings',
+			'lkScreenshots',
+			'lkWrappers',
+		},
+		policy = {
+			autoPopulateFromActions = false,
+			includeSubMenus = true,
+		},
+	},
+	{
+		title = 'lkDefault',
+		description = 'Default Tools',
+		defaultShortcut = 'D',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.default' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkRectangle',
+		description = 'Rectangle Pro',
+		defaultShortcut = 'R',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.rectangle' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkMiscScripts',
+		description = 'Miscellaneous Scripts',
+		defaultShortcut = 'S',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.misc' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkBenefitRates',
+		description = 'Benefit Rates',
+		defaultShortcut = 'B',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.benefitRates' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkCaseChangers',
+		description = 'Case Changers',
+		defaultShortcut = 'C',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.caseChangers' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkDateScripts',
+		description = 'Date Scripts',
+		defaultShortcut = 'T',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.dateScripts' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkMarkdown',
+		description = 'Markdown Tools',
+		defaultShortcut = 'M',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.markdown' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkMarkdownLists',
+		description = 'Markdown Lists',
+		defaultShortcut = 'L',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.markdownLists' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkMarkdownHeadings',
+		description = 'Markdown Headings',
+		defaultShortcut = 'H',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.markdownHeadings' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkScreenshots',
+		description = 'Screenshots',
+		defaultShortcut = 'X',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.screenshots' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
+		title = 'lkWrappers',
+		description = 'Wrappers',
+		defaultShortcut = 'W',
+		policy = {
+			autoPopulateFromActions = true,
+			includeTags = { 'lk.wrappers' },
+		},
+		sort = {
+			by = 'custom',
+		},
+	},
+	{
 		title = 'externalHotkeys',
 		description = 'External Hotkeys',
 		memberRoot = true,

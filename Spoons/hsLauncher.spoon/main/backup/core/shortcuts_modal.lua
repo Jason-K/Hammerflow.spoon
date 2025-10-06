@@ -3,7 +3,7 @@
 
 local M = {}
 local log = require('hsLauncher.main.core.logger')
-local modal = require('hsLauncher.main.core.hyper_modal')
+local modal = require('hsLauncher.main.backup.core.hyper_modal')
 
 local MODE_NAME = 'shortcuts'
 

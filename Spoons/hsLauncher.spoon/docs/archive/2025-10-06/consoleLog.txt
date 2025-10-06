@@ -1,0 +1,651 @@
+> sudo rg "hsLauncher.main.core.hyper_" --glob "*.lua"
+Password:
+rg: ./QSpace/Active Folders/QSpace/.git: stream did not contain valid UTF-8
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+rg: Operation timed out (os error 60)
+Scripts/Metascripts/hsLauncher/hsLauncher/main/aliases.lua
+25:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Scripts/Metascripts/hsLauncher/hsLauncher/main/core/leader_config.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Scripts/Metascripts/hsLauncher/hsLauncher/main/core/actions.lua
+60:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+
+Scripts/Metascripts/hsLauncher/hsLauncher/main/core/shortcuts_modal.lua
+4:local modal = require('hsLauncher.main.core.hyper_modal')
+
+Scripts/Metascripts/hsLauncher/hsLauncher/main/init.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Scripts/Metascripts/hsLauncher/hsLauncher/tests/test_leader_registry.lua
+63:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Scripts/Metascripts/hsLauncher/hsLauncher/tests/test_actions.lua
+84:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code/User/History/2bcc349d/xxWB.lua
+6:local modal = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code/User/History/10f49f4f/BiLz.lua
+149:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code/User/History/10f49f4f/JI2T.lua
+149:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code/User/History/10f49f4f/ASTn.lua
+149:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code/User/History/-1e5dd167/WcEI.lua
+124:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+rg: Operation timed out (os error 60)
+
+Library/Application Support/Code - Insiders/User/History/30195c77/JNYX.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/w1NO.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/Vlqq.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/ParD.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/fF9k.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/4ymU.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/slyr.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/PgBH.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/kbBC.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/8ANc.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/PVYT.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/qTDs.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/ahQ1.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/RIdh.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/VC4t.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/Wqay.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/xtAp.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/30195c77/DohL.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7e614f5a/9uoF.lua
+4:local modal = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/Ue2t.lua
+79:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/zc4i.lua
+97:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/kVWZ.lua
+91:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/79gj.lua
+79:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/cuB8.lua
+94:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/8U82.lua
+78:		hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/fi4q.lua
+78:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/Ly6C.lua
+101:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/9YUt.lua
+79:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/NLMB.lua
+78:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/s8qk.lua
+78:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/LXI4.lua
+78:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/Fcgx.lua
+91:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/jQuv.lua
+95:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/95HR.lua
+78:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/OApZ.lua
+101:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/102e84d6/kSd2.lua
+79:    hyper = safeRequire('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/nXAU.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/LLFY.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/dBoL.lua
+9:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/O3kE.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/m45k.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/KjnZ.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/wwho.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/ewUz.lua
+9:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/nGOS.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/azsQ.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-5c633b34/bCbu.lua
+5:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/2cb50a4e/0Wrl.lua
+21:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/2cb50a4e/63RX.lua
+25:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/68e5164/VaiE.lua
+1:local HyperModal = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/68e5164/Nqqi.lua
+1:local HyperModal = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/er6r.lua
+22:		hyper = require('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/efGH.lua
+10:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/tyg4.lua
+8:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/T2qG.lua
+4:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/dFsS.lua
+10:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/1bHw.lua
+10:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/vk1Q.lua
+9:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/oOMz.lua
+10:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/AhI5.lua
+10:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/fDed.lua
+20:		hyper = require('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/7a85117f/76nf.lua
+22:		hyper = require('hsLauncher.main.core.hyper_modal'),
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/Ddxr.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/sEDP.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/WDJX.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/wEAi.lua
+4:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/ygnA.lua
+4:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/iyyg.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/X7Zm.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/rx7h.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/w3SZ.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/GSLY.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/QA2n.lua
+4:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/MSGJ.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-241d7d6c/tVNK.lua
+6:local hyper = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/7hGC.lua
+73:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/W2R7.lua
+77:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/DUNr.lua
+77:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/TEEL.lua
+71:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/3gyC.lua
+93:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/w4TN.lua
+73:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/778D.lua
+71:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/L32K.lua
+79:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/2dda2524/h7uV.lua
+84:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/1eabf66f/K9gR.lua
+4:local modal = require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/Y4Kd.lua
+272:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/Wzrk.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/DXSa.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/gnrE.lua
+103:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/bfSD.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/Fbby.lua
+65:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/paX7.lua
+107:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/OaY8.lua
+154:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/dTw4.lua
+63:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/pxlw.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/1V7F.lua
+106:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/RQkK.lua
+103:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/jdsN.lua
+108:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/RuqN.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/gNo7.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/KLbd.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/wocF.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/dN0v.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/ZBaO.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/Itjz.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/Shmj.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/sGNm.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/JvkB.lua
+109:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/J38J.lua
+111:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/KFR6.lua
+87:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/HFC6.lua
+108:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/qFku.lua
+108:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/ewqg.lua
+152:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/L6xb.lua
+110:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/10f49f4f/8tKg.lua
+61:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/79fedada/ZHuu.lua
+63:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/1c772391/WMFG.lua
+60:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/1c772391/jbGu.lua
+59:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/1c772391/kHbg.lua
+59:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/1c772391/oTKm.lua
+59:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/1c772391/hGD6.lua
+60:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-43a2aa96/lF0b.lua
+4:local primary = 'hsLauncher.main.core.hyper_modal'
+
+Library/Application Support/Code - Insiders/User/History/-43a2aa96/Yp6i.lua
+1:return require('hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-43a2aa96/cZdM.lua
+1:local primary = 'hsLauncher.main.core.hyper_modal'
+
+Library/Application Support/Code - Insiders/User/History/-43a2aa96/g1Go.lua
+1:local ok, mod = pcall(require, 'hsLauncher.main.core.hyper_modal')
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/XxMS.lua
+232:if package.preload['hsLauncher.main.core.hyper_modal'] == nil then
+233:    package.preload['hsLauncher.main.core.hyper_modal'] = function()
+349:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/sNSV.lua
+238:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+343:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/LYK7.lua
+232:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+337:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/PzIO.lua
+91:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/dkm9.lua
+93:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/gSbO.lua
+86:package.preload['hsLauncher.main.core.hyper_modal'] = package.preload['hsLauncher.main.core.hyper_modal'] or function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/wL2r.lua
+222:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+327:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/1bEJ.lua
+232:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+337:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/RRX4.lua
+227:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+332:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/Z03M.lua
+93:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/fR6c.lua
+227:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+332:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/qqwc.lua
+90:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/i5aM.lua
+230:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+335:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-326e8581/Cs9r.lua
+98:ensurePreload('hsLauncher.main.core.hyper_modal', function()
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/dmsK.lua
+27:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/8g2L.lua
+27:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/GpTt.lua
+29:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/93zh.lua
+27:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/3ugA.lua
+25:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/UvUw.lua
+27:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/edU7.lua
+27:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/kMOB.lua
+27:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-4c35707d/nSRe.lua
+31:	['hsLauncher.main.hyper_modal'] = 'hsLauncher.main.core.hyper_modal',
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/7uEn.lua
+127:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/PlNS.lua
+132:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/thcb.lua
+124:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/scR2.lua
+82:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/ilxl.lua
+124:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/fQst.lua
+132:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/HHF4.lua
+124:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/tVOk.lua
+84:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/5v6j.lua
+86:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/-1e5dd167/L3QX.lua
+108:package.preload['hsLauncher.main.core.hyper_modal'] = function()
+
+Library/Application Support/Code - Insiders/User/History/97d977c/9xZe.lua
+22:        hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+92:        local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+248:    return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/mD4r.lua
+22:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+91:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+247:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/mUCZ.lua
+22:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+91:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+247:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/nhkO.lua
+22:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+91:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+247:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/v6kK.lua
+21:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+90:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+246:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/FAY1.lua
+60:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+188:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/DX6R.lua
+22:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+91:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+247:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/Jq2b.lua
+62:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+201:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/0sUu.lua
+22:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+91:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+247:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/7KGZ.lua
+24:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+93:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+249:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/skH0.lua
+22:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+91:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+247:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/dqyE.lua
+24:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+93:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+256:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/SKoD.lua
+61:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+200:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/Xv5O.lua
+19:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+88:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+244:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/hnoy.lua
+60:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+199:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/EguD.lua
+61:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+200:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/FIkU.lua
+28:    hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+97:    local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+253:  return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/eeMc.lua
+22:		hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+92:		local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+248:	return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+
+Library/Application Support/Code - Insiders/User/History/97d977c/cm3P.lua
+22:		hyper = lazyRequire('hsLauncher.main.core.hyper_modal'),
+92:		local modal = lazyRequire('hsLauncher.main.core.hyper_modal')
+248:	return Actions.moduleFn('hsLauncher.main.core.hyper_modal', 'enterMode', { modeName })
+rg: ./Library/Containers/com.apple.photos.ImageConversionService/Data/tmp/B65E84A9-D645-4087-AE98-F75EF2317FE8: Interrupted system call (os error 4)
