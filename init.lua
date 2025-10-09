@@ -1,7 +1,10 @@
+---@diagnostic disable-next-line: undefined-global
+local hs = hs
+
 -- Initialize loading variables
 
 -- Use hs.logger for logging
-local mainLogger = hs.logger.new("mainInit", "error") -- Changed "mainConfig" to "mainInit" for clarity
+local mainLogger = hs.logger.new("mainInit", "info") -- Surface informational startup logs
 
 -- Safely load Spoons with error handling
 local safeLoad = hs.loadSpoon("SafeLoad")
@@ -45,6 +48,22 @@ local function safeCallSpoon(description, func)
     end
 end
 
+---@param base string
+local function extendPackagePath(base)
+    local patterns = {
+        base .. "/?.lua",
+        base .. "/?/init.lua",
+    }
+    for _, pattern in ipairs(patterns) do
+        if not package.path:find(pattern, 1, true) then
+            package.path = package.path .. ";" .. pattern
+        end
+    end
+end
+
+local hsLauncher2Root = nil
+local hsStringEvalRoot = nil
+
 -- -----------------------------------------------------------------------
 -- AUTOINIT
 -- -----------------------------------------------------------------------
@@ -57,6 +76,50 @@ safeCallSpoon("Configuring console", function()
     hs.console.clearConsole()
     hs.console.darkMode(true)
     hs.window.animationDuration = 0
+end)
+
+safeCallSpoon("Extending package paths for hsLauncher2", function()
+    local candidates = {
+        hs.configdir .. "/hsLauncher2",
+        hs.configdir .. "/../hsLauncher2",
+        os.getenv("HOME") .. "/Scripts/Metascripts/hsLauncher2",
+    }
+    for _, base in ipairs(candidates) do
+        if type(base) == "string" then
+            local attrs = hs.fs.attributes(base)
+            if type(attrs) == "table" and attrs.mode == "directory" then
+                hsLauncher2Root = hsLauncher2Root or base
+                extendPackagePath(base)
+            end
+        end
+    end
+    if not hsLauncher2Root then
+        mainLogger:w("hsLauncher2 directory not found in expected locations; launcher will not start")
+    else
+        mainLogger:i("hsLauncher2 root detected at " .. hsLauncher2Root)
+    end
+end)
+
+safeCallSpoon("Extending package paths for hsStringEval", function()
+    local candidates = {
+        hs.configdir .. "/hsStringEval",
+        hs.configdir .. "/../hsStringEval",
+        os.getenv("HOME") .. "/Scripts/Metascripts/hsStringEval",
+    }
+    for _, base in ipairs(candidates) do
+        if type(base) == "string" then
+            local attrs = hs.fs.attributes(base)
+            if type(attrs) == "table" and attrs.mode == "directory" then
+                hsStringEvalRoot = hsStringEvalRoot or base
+                extendPackagePath(base)
+            end
+        end
+    end
+    if not hsStringEvalRoot then
+        mainLogger:w("hsStringEval directory not found; refactored ClipboardFormatter unavailable")
+    else
+        mainLogger:i("hsStringEval root detected at " .. hsStringEvalRoot)
+    end
 end)
 
 -- -----------------------------------------------------------------------
@@ -160,28 +223,82 @@ safeCallSpoon("Loading spoons", function()
         mainLogger:w("ReloadConfiguration spoon or its start method not found.")
     end
 
+    --[[
     local clipFormatter = safeLoadSpoon("ClipboardFormatter")
     if clipFormatter then
         SpoonTable.ClipboardFormatter = clipFormatter
         FormatClip = function() SpoonTable.ClipboardFormatter:formatClipboard() end
         FormatSelected = function() SpoonTable.ClipboardFormatter:formatSelection() end
     end
+    --]]
+
+    if type(hsStringEvalRoot) == "string" then
+        local ok, moduleOrErr = pcall(require, "src.init")
+        if not ok then
+            mainLogger:e("Failed to require refactored ClipboardFormatter: " .. tostring(moduleOrErr))
+        elseif moduleOrErr then
+            package.loaded["hsStringEval.src.init"] = moduleOrErr
+            moduleOrErr.spoonPath = hsStringEvalRoot .. "/src"
+            local formatterInstance = moduleOrErr:init()
+            SpoonTable.ClipboardFormatter = formatterInstance
+            FormatClip = function()
+                return SpoonTable.ClipboardFormatter:formatClipboardDirect()
+            end
+            FormatSelected = function()
+                return SpoonTable.ClipboardFormatter:formatSelection()
+            end
+            mainLogger:i("Refactored ClipboardFormatter loaded")
+        else
+            mainLogger:e("Refactored ClipboardFormatter module returned nil")
+        end
+    else
+        mainLogger:w("Skipping refactored ClipboardFormatter load; hsStringEval root not detected")
+    end
+
+    if not FormatClip then
+        FormatClip = function()
+            if type(hs) == "table" and hs.alert then
+                hs.alert.show("ClipboardFormatter unavailable")
+            end
+            return false
+        end
+    end
+
+    if not FormatSelected then
+        FormatSelected = function()
+            if type(hs) == "table" and hs.alert then
+                hs.alert.show("ClipboardFormatter unavailable")
+            end
+            return false
+        end
+    end
 
     local stringWrapper = safeLoadSpoon("StringWrapper")
-    if stringWrapper then
+    if type(stringWrapper) == "table" then
         SpoonTable.StringWrapper = stringWrapper
         WrapString = function() SpoonTable.StringWrapper:wrapSelection() end
         QuoteString = function() SpoonTable.StringWrapper:wrapSelectionWithQuotes() end
         WrapWithParam = function(param) SpoonTable.StringWrapper:wrapSelectionWithParam(param) end
     end
 
-    local hsLauncher = safeLoadSpoon("hsLauncher")
-    if hsLauncher then
-        SpoonTable.hsLauncher = hsLauncher
-        hsLauncher:start()
-    else
-        mainLogger:w("hsLauncher spoon or its start method not found.")
+
+end)
+
+safeCallSpoon("Starting hsLauncher2", function()
+    if not hsLauncher2Root then
+        mainLogger:w("Skipping hsLauncher2 startup because root directory was not detected")
+        return
     end
+    local entry = hsLauncher2Root .. "/init.lua"
+    local attrs = hs.fs.attributes(entry)
+    if not attrs then
+        error("hsLauncher2 entry file missing at " .. entry)
+    end
+    local ok, result = pcall(dofile, entry)
+    if not ok then
+        error(result)
+    end
+    return result
 end)
 
 safeCallSpoon("Finalizing initialization", function()
