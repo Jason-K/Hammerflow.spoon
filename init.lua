@@ -217,7 +217,14 @@ safeCallSpoon("Loading spoons", function()
             return self
         end
 
-        SpoonTable.ReloadConfiguration.watch_paths = { hs.configdir }
+        local watch_paths = { hs.configdir }
+        if hsLauncher2Root then
+            table.insert(watch_paths, hsLauncher2Root)
+        end
+        if hsStringEvalRoot then
+            table.insert(watch_paths, hsStringEvalRoot)
+        end
+        SpoonTable.ReloadConfiguration.watch_paths = watch_paths
         SpoonTable.ReloadConfiguration:start()
     else
         mainLogger:w("ReloadConfiguration spoon or its start method not found.")
@@ -247,6 +254,7 @@ safeCallSpoon("Loading spoons", function()
             FormatSelected = function()
                 return SpoonTable.ClipboardFormatter:formatSelection()
             end
+            FormatSelection = FormatSelected
             mainLogger:i("Refactored ClipboardFormatter loaded")
         else
             mainLogger:e("Refactored ClipboardFormatter module returned nil")
@@ -273,6 +281,10 @@ safeCallSpoon("Loading spoons", function()
         end
     end
 
+    if not FormatSelection then
+        FormatSelection = FormatSelected
+    end
+
     local stringWrapper = safeLoadSpoon("StringWrapper")
     if type(stringWrapper) == "table" then
         SpoonTable.StringWrapper = stringWrapper
@@ -280,8 +292,6 @@ safeCallSpoon("Loading spoons", function()
         QuoteString = function() SpoonTable.StringWrapper:wrapSelectionWithQuotes() end
         WrapWithParam = function(param) SpoonTable.StringWrapper:wrapSelectionWithParam(param) end
     end
-
-
 end)
 
 safeCallSpoon("Starting hsLauncher2", function()
